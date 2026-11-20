@@ -28,16 +28,27 @@ function guessTyp(name: string, nominal: boolean): AssetTyp {
   return 'aktie';
 }
 
+/**
+ * Gesperrt gesetzte Überschriften ("W e r t p a p i e r - A b r e c h n u n g") zusammenziehen.
+ * Die HVB setzt einige Titel mit Buchstabenabstand; pdf.js liefert sie dann mit Leerzeichen
+ * zwischen jedem Zeichen.
+ */
+export function normalizeHvbText(text: string): string {
+  return text.replace(/(?:^|(?<=\s))((?:\S ){3,}\S)(?=\s|$)/gm, (m) => m.replace(/ /g, ''));
+}
+
 /** Ist das überhaupt ein HVB-Wertpapierbeleg? */
-export function isHvbDocument(text: string): boolean {
+export function isHvbDocument(rawText: string): boolean {
+  const text = normalizeHvbText(rawText);
   return /Wertpapi\s*er\s*-\s*Abrechnung|Wertpapiermitteilung/i.test(text) && /HVB|UniCredit|HypoVereinsbank|DE\s*129\s*273\s*380/i.test(text);
 }
 
-export function parseHvbText(text: string, fileName = ''): ParsedRecord[] {
+export function parseHvbText(rawText: string, fileName = ''): ParsedRecord[] {
+  const text = normalizeHvbText(rawText);
   // Mehrere Belege in einem PDF? An den Überschriften trennen.
   const parts = text
-    .split(/(?=Wertpapi\s*er\s*-\s*Abrechnung\s+(?:Kauf|Verkauf)|Wertpapiermitteilung\s*-\s*\S)/i)
-    .filter((p) => /Wertpapi\s*er\s*-\s*Abrechnung\s+(?:Kauf|Verkauf)|Wertpapiermitteilung\s*-\s*\S/i.test(p));
+    .split(/(?=Wertpapi\s*er\s*-\s*Abrechnung\s*(?:Kauf|Verkauf)|Wertpapiermitteilung\s*-\s*\S)/i)
+    .filter((p) => /Wertpapi\s*er\s*-\s*Abrechnung\s*(?:Kauf|Verkauf)|Wertpapiermitteilung\s*-\s*\S/i.test(p));
   const records: ParsedRecord[] = [];
   for (const part of parts) {
     const r = /Wertpapi\s*er\s*-\s*Abrechnung/i.test(part) ? parseTrade(part, fileName) : parseIncome(part, fileName);
@@ -48,27 +59,60 @@ export function parseHvbText(text: string, fileName = ''): ParsedRecord[] {
 
 function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   const warnings: string[] = [];
-  const side = /Abrechnung\s+Verkauf/i.test(text) ? 'verkauf' : 'kauf';
+  const side = /Abrechnung\s*Verkauf/i.test(text) ? 'verkauf' : 'kauf';
 
-  // Zeile "ST 0,829   OM VP FLEXIBLE ...   A3D9CC" bzw. "EUR 2.000,00   4,25% ...   ABC123"
-  const posLine = new RegExp(`^\\s*(ST|STK|EUR)\\s+${NUM}\\s+(.+?)\\s{2,}([A-Z0-9]{6})\\s*$`, 'm').exec(text);
-  if (!posLine) return undefined;
-  const nominal = posLine[1] === 'EUR';
-  const quantity = parseDe(posLine[2]);
-  let name = posLine[3].trim();
-  const wkn = posLine[4];
+  // Die Zeilenlage unterscheidet sich je nach PDF-Leser (Druckansicht vs. pdf.js). Deshalb wird
+  // abschnittsweise gesucht statt zeilengenau:
+  //   [Wertpapierbezeichnung ... Zum Kurs von]  -> Stück/Nennwert, Name, WKN, ISIN
+  //   [Zum Kurs von ... Abrechnung]             -> Kurs, Währung, Ausführungstag
+  const posStart = text.search(/Wertpapierkennnummer\s*\/\s*ISIN|Wertpapierbezeichnung/);
+  const kursStart = text.search(/Zum\s+Kurs\s+von/);
+  if (posStart < 0 || kursStart < 0 || kursStart < posStart) return undefined;
+  const posSection = text
+    .slice(posStart, kursStart)
+    .split('\n')
+    .slice(1) // Überschriftszeile
+    .join('\n');
+  const abrStart = text.slice(kursStart).search(/^\s*Abrechnung\s*$|Kurswert/m);
+  const kursSection = text.slice(kursStart, abrStart > 0 ? kursStart + abrStart : undefined);
 
-  // Folgezeile: Namenszusatz + ISIN
-  const after = text.slice(posLine.index + posLine[0].length).split('\n').slice(1, 3).join('\n');
-  const isinLine = /^\s*(.*?)\s{2,}([A-Z]{2}[A-Z0-9]{9}\d)\s*$/m.exec(after);
-  const isin = isinLine?.[2] ?? match(text, ISIN_RE);
-  if (isinLine?.[1]) name = `${name} ${isinLine[1].trim()}`;
+  const qtyM = new RegExp(`\\b(ST|STK)\\s+${NUM}`).exec(posSection) ?? new RegExp(`\\b(EUR)\\s+${NUM}`).exec(posSection);
+  if (!qtyM) return undefined;
+  const nominal = qtyM[1] === 'EUR';
+  const quantity = parseDe(qtyM[2]);
 
-  // "EUR 117,92   01.07.2026" bzw. "USD 54,10   01.07.2026"
-  const kursM = new RegExp(`Zum\\s+Kurs\\s+von[\\s\\S]*?\\n\\s*(?:([A-Z]{3})\\s+)?${NUM}\\s*%?\\s+(\\d{2}\\.\\d{2}\\.\\d{4})`).exec(text);
-  const currency = kursM?.[1] && kursM[1] !== 'EUR' ? kursM[1] : undefined;
-  const priceRaw = kursM ? parseDe(kursM[2]) : NaN;
-  let date = kursM ? deDateToIso(kursM[3]) : '';
+  // Zeilen ohne die Stück-Angabe; die erste Zeile mit WKN am Ende ist der Name
+  const qtyPrefix = /^\s*(?:ST|STK|EUR)\s+[\d.,]+\s*/;
+  const posLines = posSection
+    .split('\n')
+    .map((l) => l.replace(qtyPrefix, '').trim())
+    .filter(Boolean);
+  let name = '';
+  let wkn: string | undefined;
+  let isin: string | undefined;
+  for (const l of posLines) {
+    const isinM = /^(.*?)\s*\b([A-Z]{2}[A-Z0-9]{9}\d)$/.exec(l);
+    if (isinM) {
+      isin = isinM[2];
+      if (isinM[1]) name = `${name} ${isinM[1].trim()}`.trim();
+      continue;
+    }
+    const wknM = /^(.*?)\s{2,}([A-Z0-9]{6})$/.exec(l) ?? (!wkn ? /^(.*?)\s+([A-Z0-9]*\d[A-Z0-9]*)$/.exec(l) : null);
+    if (wknM && wknM[2].length === 6 && !wkn) {
+      wkn = wknM[2];
+      name = `${wknM[1].trim()} ${name}`.trim();
+    }
+  }
+  isin ??= match(text, ISIN_RE);
+  if (!name) name = wkn ?? isin ?? 'Unbekanntes Wertpapier';
+
+  // "EUR 117,92" bzw. "USD 54,10" und das Ausführungsdatum (Reihenfolge egal)
+  const kursM = new RegExp(`\\b([A-Z]{3})\\s+${NUM}\\s*%?`).exec(kursSection) ?? new RegExp(`${NUM}\\s*%`).exec(kursSection);
+  const kursCur = kursM && kursM.length > 2 ? kursM[1] : undefined;
+  const currency = kursCur && kursCur !== 'EUR' ? kursCur : undefined;
+  const priceRaw = kursM ? parseDe(kursM[kursM.length > 2 ? 2 : 1]) : NaN;
+  const dateM = /(\d{2}\.\d{2}\.\d{4})/.exec(kursSection);
+  let date = dateM ? deDateToIso(dateM[1]) : '';
   if (!date) {
     const abr = match(text, /Abrechnungstag[\s\S]*?(\d{2}\.\d{2}\.\d{4})/);
     date = abr ? deDateToIso(abr) : '';
@@ -76,7 +120,7 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   }
 
   const kurswertEur = parseDe(match(text, new RegExp(`Kurswert\\s+EUR\\s+${NUM}`)));
-  const total = parseDe(match(text, new RegExp(`(?:Belastung|Gutschrift)\\s*(?:\\(vor Steuern\\))?\\s+EUR\\s+${NUM}`)));
+  const total = parseDe(match(text, new RegExp(`(?:Belastung|Gutschrift)\\s*(?:\\(vor\\s+Steuern\\))?\\s+EUR\\s+${NUM}`)));
   const provision = parseDe(match(text, new RegExp(`provision\\*?\\s+EUR\\s+${NUM}`, 'i')));
   const fxRate = parseDe(match(text, new RegExp(`Devisenkurs[^\\d\\n]*${NUM}`)));
   const kurswertFx = currency ? parseDe(match(text, new RegExp(`Kurswert\\s+${currency}\\s+${NUM}`))) : NaN;

@@ -3,6 +3,16 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.1.1] – 2026-11-20
+
+### Behoben
+- HVB-Kauf- und Verkaufsabrechnungen wurden beim Import mit „Keine HVB-Wertpapierabrechnung erkannt“
+  abgelehnt. Ursache: Die HVB setzt den Titel „Wertpapier-Abrechnung Kauf“ gesperrt (mit Buchstabenabstand),
+  und der PDF-Leser im Browser liefert Stückzahl, Kurs und Datum in anderer Zeilenlage als die Druckansicht.
+  Gesperrte Titel werden jetzt zusammengezogen, und Stück, Name, WKN/ISIN, Kurs und Datum werden
+  abschnittsweise statt zeilengenau gesucht. Geprüft mit den echten Beispiel-Abrechnungen.
+- Wörter innerhalb von Namen werden nicht mehr fälschlich als Spalten getrennt.
+
 ## [0.1.0] – 2026-11-20
 
 Erste Version.

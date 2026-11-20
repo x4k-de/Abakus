@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseHvbText } from '../src/lib/import/hvb';
+import { itemsToLines } from '../src/lib/import/pdfLines';
 import { parseCsvText, parsePdfText } from '../src/lib/import/importService';
 
 // Alle Testdaten sind erfunden – es werden niemals echte Abrechnungen eingecheckt.
@@ -44,6 +45,15 @@ describe('HVB-Abrechnungen', () => {
     expect(r.asset).toMatchObject({ typ: 'anleihe', isin: 'DE0000000004' });
   });
 
+  it('liest Kaufabrechnungen auch in der Zeilenlage von pdf.js (gesperrter Titel, Stück in eigener Zeile)', () => {
+    const r = parsePdfText(fx('hvb-kauf-pdfjs.txt'), 'kauf.PDF');
+    expect(r.error).toBeUndefined();
+    const [x] = r.records;
+    expect(x.warnings).toEqual([]);
+    expect(x.asset).toMatchObject({ wkn: 'F6G7H8', isin: 'DE0000000007', name: 'MUSTER.ST.GL.DIV.100 U.ETF DE INHABER-ANTEILE' });
+    expect(x.booking).toMatchObject({ type: 'kauf', date: '2026-07-01', quantity: 1.29, price: 38.17, amount: 49.24, fee: 0.74 });
+  });
+
   it('rechnet USD-Abrechnungen in EUR', () => {
     const [r] = parseHvbText(fx('hvb-kauf-usd.txt'));
     expect(r.booking).toMatchObject({ type: 'kauf', quantity: 2, amount: 100, fee: 1.5, currency: 'USD', priceOriginal: 54.1, fxRate: 1.082 });
@@ -82,5 +92,17 @@ describe('Krypto-CSV', () => {
 
   it('erkennt unbekannte CSV', () => {
     expect(parseCsvText('a;b;c\n1;2;3', 'x.csv').error).toBeTruthy();
+  });
+});
+
+describe('PDF-Zeilen', () => {
+  it('zieht gesperrte Titel zusammen und trennt Spalten', () => {
+    const t = itemsToLines([
+      { str: 'W e r t p a p i e r - A b r e c h n u n g', x: 63, y: 772.8, w: 176 },
+      { str: 'K a u f', x: 247.4, y: 772.8, w: 32 },
+      { str: 'Kurswert', x: 63, y: 700, w: 30 },
+      { str: 'EUR', x: 400, y: 700.5, w: 15 },
+    ]);
+    expect(t.split('\n')).toEqual(['Wertpapier-Abrechnung Kauf', 'Kurswert   EUR']);
   });
 });
