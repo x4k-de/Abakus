@@ -1,0 +1,14 @@
+Wertpapiermitteilung
+Depotnummer   Datum
+0123 45678901   20.01.2025
+Wertpapiermitteilung - Ertragszahlung für Depotnummer 0123 0045678901
+MUSTER VALUE FONDS   Wertpapierkennnummer S7T8U9 / DE0000000011
+INHABER-ANTEILE C
+Geschäftsjahr   2024/2025
+-------------------------------------------------------------------------------------
+Stück   0,500
+zahlbar mit EUR 7,00   Bruttobetrag   EUR   3,50
+-------------------------------------------
+Valuta 21.01.2025   Gutschrift   EUR   3,50
+Die Kaufabrechnung zur Wiederanlage erhalten Sie separat.
+Referenz 20250120KUP0000000011

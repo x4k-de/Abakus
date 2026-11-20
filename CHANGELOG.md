@@ -3,6 +3,13 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.1.3] – 2026-11-20
+
+### Behoben
+- Ältere Ertrags- und Zinsmitteilungen (Jahrgang 2025) wurden mit „Keine HVB-Wertpapierabrechnung erkannt“
+  abgelehnt: Auf ihrer ersten Seite stehen weder Bankname noch Umsatzsteuer-ID. Erkannt wird jetzt auch über
+  die HVB-Bankleitzahl bzw. den typischen Aufbau („Wertpapiermitteilung – … für Depotnummer“ mit WKN/ISIN).
+
 ## [0.1.2] – 2026-11-20
 
 ### Geändert
