@@ -27,3 +27,5 @@ Erste Version.
   mit Gewinn/Verlust; Warnhinweis, wenn Kaufabrechnungen fehlen.
 - Backup als JSON-Datei exportieren und wieder einspielen.
 - Dunkles Design in Grüntönen mit Glas-Karten und Leuchteffekten.
+- Automatische Veröffentlichung über GitHub Pages bei jeder Änderung auf `main`
+  (Adresse: https://x4k-de.github.io/abakus/).

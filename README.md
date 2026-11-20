@@ -23,7 +23,7 @@ ohne App Store. **Alle Daten bleiben auf dem Gerät**; es gibt keinen Server.
 
 ## Auf dem iPhone installieren
 
-1. Die Adresse der App in **Safari** öffnen.
+1. **https://x4k-de.github.io/abakus/** in **Safari** öffnen.
 2. Unten auf **Teilen** tippen → **Zum Home-Bildschirm**.
 3. Abakus startet nun wie eine normale App (auch offline).
 
@@ -42,6 +42,9 @@ npm run build      # Produktions-Build nach dist/
 Technik: Vite, React, TypeScript, PWA (vite-plugin-pwa), IndexedDB (Dexie), pdf.js, Papa Parse.
 Details zu Aufbau und Berechnung: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
 Alle Änderungen: [CHANGELOG.md](CHANGELOG.md).
+
+Veröffentlichung: Jeder Merge nach `main` baut die App und stellt sie automatisch über GitHub Pages bereit
+(`.github/workflows/deploy.yml`).
 
 **Datenschutz:** Niemals echte Abrechnungen, CSV-Exporte oder Backups einchecken
 (siehe `.gitignore`). Tests verwenden ausschließlich erfundene Daten.
