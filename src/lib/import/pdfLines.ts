@@ -34,3 +34,14 @@ export function itemsToLines(items: TextItem[]): string {
     })
     .join('\n');
 }
+
+/** Ist der ausgelesene Text unbrauchbar (Schrift ohne Zeichenzuordnung)? */
+export function looksGarbled(text: string): boolean {
+  if (/Wertpapier|Abrechnung|Depotnummer/i.test(text)) return false;
+  const visible = text.replace(/\s/g, '');
+  if (visible.length < 50) return true;
+  // eslint-disable-next-line no-control-regex
+  const control = (visible.match(/[\u0000-\u001f�]/g) ?? []).length;
+  const letters = (visible.match(/[A-Za-zÄÖÜäöüß]/g) ?? []).length;
+  return control / visible.length > 0.05 || letters / visible.length < 0.4;
+}

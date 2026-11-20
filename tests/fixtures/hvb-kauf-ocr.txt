@@ -1,0 +1,19 @@
+°
+CS HypoVereinsbank Member of 4 UniCredit UniCredit Bank AG
+Wertpapier-Abrechnung Kauf
+- Geschäftsbestätigung vor steuerlicher Behandlung - Kommission außerbörslich
+Depotnummer Abrechnungstag Blatt
+— 123 45678901 09.03.2021 | 1
+Nennbetrag Wertpapierbezeichnung Wertpapierkennnummer/SIN
+ST 0,500 MUSTER EQULTS FUND Y4Z5A6
+/ ACT. NOM. P EUR DIS. ON FR0000120271
+Zum Kurs von Ausführungstag/Zeit Ausführungsort Merwahlart 00000202022
+08.03.2021 ; ©
+EUR 100,00 17.50.34 Girosammelverwahrung 8
+Abrechnung | Ss
+Kurswert I EUR 50,00 Ss
+Wertpapierprovision”* EUR 1,10 3
+Belastung (vor Steuern) EUR 51,10 Ss
+Valuta 09.03.2021 A x
+Umsatzreferenz: 20210309WAB0000000013 Ss
+Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380. >

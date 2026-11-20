@@ -1,0 +1,18 @@
+UniCredit Bank AG
+Wertpapier-Einlösung
+- Geschäftsbestätigung vor steuerlicher Behandlung -
+Depotnummer   Abrechnungstag   Blatt
+123   45678901   09.06.2021   1
+Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+UNICREDIT BANK AG   B7C8D9
+ST 1
+HVB EXP.CL MUSTER   DE000B7C8D93
+Zum Kurs von   Ausführungstag/Zeit   Ausführungsort   Verwahrart
+10.06.2021
+EUR 1.000,00   MUENCHEN   Girosammelverwahrung
+Abrechnung
+Kurswert   EUR   1.000,00
+-----------------------
+Gutschrift (vor Steuern)   EUR   1.000,00
+Valuta 10.06.2021   -----------------------
+Umsatzreferenz: 20210610DAU000000014

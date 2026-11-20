@@ -1,5 +1,6 @@
 // Import-Ablauf: Dateien lesen -> Umsätze erkennen -> Vorschau (inkl. Duplikat-Prüfung) -> speichern.
 
+import { priceFactor } from '../types';
 import { type AbakusDB, db as defaultDb } from '../db';
 import { uid } from '../num';
 import type { Asset, Booking } from '../types';
@@ -24,8 +25,8 @@ export async function parseFile(file: File): Promise<FileParseResult> {
   try {
     if (lower.endsWith('.pdf') || file.type === 'application/pdf') {
       const { pdfToText } = await import('./pdfText');
-      const text = await pdfToText(await file.arrayBuffer());
-      return parsePdfText(text, name);
+      const { text, ocr } = await pdfToText(await file.arrayBuffer());
+      return parsePdfText(text, name, { ocr });
     }
     if (lower.endsWith('.csv') || file.type.includes('csv') || file.type === 'text/plain') {
       return parseCsvText(await file.text(), name);
@@ -36,12 +37,52 @@ export async function parseFile(file: File): Promise<FileParseResult> {
   }
 }
 
-export function parsePdfText(text: string, fileName: string): FileParseResult {
+export function parsePdfText(text: string, fileName: string, opts: { ocr?: boolean } = {}): FileParseResult {
   if (!text.trim()) return { fileName, records: [], skipped: 0, error: 'Kein Text im PDF gefunden (eingescanntes Dokument?)' };
   if (!isHvbDocument(text)) return { fileName, records: [], skipped: 0, error: 'Keine HVB-Wertpapierabrechnung erkannt' };
   const records = parseHvbText(text, fileName);
   if (!records.length) return { fileName, records, skipped: 0, error: 'Belegart noch nicht unterstützt – bitte manuell erfassen' };
+  if (opts.ocr) for (const r of records) checkOcrRecord(r);
   return { fileName, records, skipped: 0 };
+}
+
+/** Prüfziffer einer ISIN (Luhn über die in Ziffern umgesetzten Zeichen). */
+export function isValidIsin(isin: string): boolean {
+  if (!/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(isin)) return false;
+  const digits = isin
+    .split('')
+    .map((c) => (/\d/.test(c) ? c : String(c.charCodeAt(0) - 55)))
+    .join('');
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    let d = Number(digits[digits.length - 1 - i]);
+    if (i % 2 === 1) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+  }
+  return sum % 10 === 0;
+}
+
+/**
+ * Per Texterkennung gelesene Belege gegenprüfen. Passt alles zusammen (gültige ISIN, Stück × Kurs = Kurswert),
+ * gibt es keinen Hinweis; sonst wird die Buchung zum Prüfen markiert.
+ */
+export function checkOcrRecord(r: ParsedRecord): void {
+  const b = r.booking;
+  const a = r.asset;
+  const problems: string[] = [];
+  if (a?.isin && !isValidIsin(a.isin)) problems.push('ISIN');
+  // Bei deutschen ISINs steckt die WKN in der ISIN – Lesefehler der WKN so korrigieren
+  if (a?.isin && isValidIsin(a.isin) && a.isin.startsWith('DE000')) a.wkn = a.isin.slice(5, 11);
+  if ((b.type === 'kauf' || b.type === 'verkauf') && b.price > 0 && b.amount > 0 && !b.currency) {
+    const expected = b.quantity * b.price * priceFactor(a);
+    if (Math.abs(expected - b.amount) > Math.max(0.05, b.amount * 0.01)) problems.push('Stück × Kurs ≠ Kurswert');
+  }
+  if (!b.date) problems.push('Datum');
+  if (problems.length) r.warnings.push(`Alter Beleg per Texterkennung gelesen (${problems.join(', ')}) – bitte prüfen`);
+  b.note = b.note ? `${b.note} · per Texterkennung gelesen` : 'per Texterkennung gelesen';
 }
 
 export function parseCsvText(text: string, fileName: string): FileParseResult {

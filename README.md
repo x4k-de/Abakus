@@ -6,8 +6,9 @@ ohne App Store. **Alle Daten bleiben auf dem Gerät**; es gibt keinen Server.
 ## Was die App kann
 
 - **HVB-Abrechnungen (PDF) importieren** – beliebig viele auf einmal (Sparpläne!). Erkannt werden
-  Kauf, Verkauf, Ertragszahlung/Ausschüttung, Dividendengutschrift und Zinszahlung (Anleihen).
-  Abrechnungen in Fremdwährung (z. B. USD) werden in EUR übernommen.
+  Kauf, Verkauf, Bezug, Einlösung, Ertragszahlung/Ausschüttung, Dividendengutschrift und Zinszahlung
+  (Anleihen). Abrechnungen in Fremdwährung (z. B. USD) werden in EUR übernommen. Alte Belege ohne
+  auslesbaren Text werden per Texterkennung auf dem Gerät gelesen.
 - **Krypto-Umsätze (CSV)** von **BISON** und **Trade Republic** importieren. Überträge auf den
   **Ledger** werden als Übertrag gebucht (kein Verkauf).
 - **Doppelte werden erkannt** (über die Bank-Referenz bzw. Inhalt) und automatisch abgewählt.

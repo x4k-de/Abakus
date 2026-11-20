@@ -32,6 +32,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,mjs}'],
+        // Texterkennung (groß, nur für alte PDFs) nicht vorab speichern, sondern bei Bedarf laden
+        globIgnores: ['**/ocr/**'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
     }),

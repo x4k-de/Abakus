@@ -3,6 +3,18 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.3.0] – 2026-11-20
+
+### Neu
+- **Alte HVB-Belege (etwa bis 2021) per Texterkennung:** Diese PDFs enthalten keinen auslesbaren Text (Schrift
+  ohne Zeichenzuordnung). Die App erkennt das, rendert die erste Seite und liest sie mit einer Texterkennung
+  (tesseract.js) – komplett auf dem Gerät. Die Dateien dafür (~15 MB) liefert die App selbst aus und lädt sie
+  nur bei Bedarf. Gelesene Werte werden gegengeprüft (ISIN-Prüfziffer, Stück × Kurs = Kurswert); nur wenn etwas
+  nicht zusammenpasst, wird die Buchung zum Prüfen markiert. Bei deutschen ISINs wird die WKN aus der ISIN
+  übernommen.
+- **Wertpapier-Einlösung** (Rückzahlung z. B. eines Zertifikats) wird als Verkauf gebucht.
+- **„Wertpapier-Abrechnung Bezug“** (Kauf aus Bezug ohne Kurs) wird erkannt.
+
 ## [0.2.0] – 2026-11-20
 
 ### Neu
