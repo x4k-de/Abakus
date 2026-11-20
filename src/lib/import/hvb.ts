@@ -35,7 +35,11 @@ function guessTyp(name: string, nominal: boolean): AssetTyp {
  * Die HVB setzt einige Titel mit Buchstabenabstand; pdf.js liefert sie dann mit Leerzeichen
  * zwischen jedem Zeichen.
  */
-export function normalizeHvbText(text: string): string {
+export function normalizeHvbText(rawText: string): string {
+  // Sehr alte Belege (etwa 2017) nutzen den deutschen 7-Bit-Zeichensatz: { | } [ \ ] ~ statt ä ö ü Ä Ö Ü ß
+  const text = /Ausf\}hrung|Gesch\{ft|Ber\}cksichtigung/.test(rawText)
+    ? rawText.replace(/[{|}[\\\]~]/g, (c) => ({ '{': 'ä', '|': 'ö', '}': 'ü', '[': 'Ä', '\\': 'Ö', ']': 'Ü', '~': 'ß' })[c] ?? c)
+    : rawText;
   return (
     text
       .replace(/(?:^|(?<=\s))((?:\S ){3,}\S)(?=\s|$)/gm, (m) => m.replace(/ /g, ''))
@@ -47,7 +51,7 @@ export function normalizeHvbText(text: string): string {
 /** Ist das überhaupt ein HVB-Wertpapierbeleg? */
 export function isHvbDocument(rawText: string): boolean {
   const text = normalizeHvbText(rawText);
-  if (!/Wertpapi\s*er\s*-\s*(?:Abrechnung|Einlösung)|Wertpapiermitteilung/i.test(text)) return false;
+  if (!/Wertpapi\s*er\s*-\s*(?:Abrechnung|Einlösung)|Bezugsrechte\s*(?:Kauf|Verkauf)|Wertpapiermitteilung/i.test(text)) return false;
   // Bank-Merkmale; ältere Mitteilungen (bis 2025) nennen die Bank nur über die Bankleitzahl
   if (/HVB|UniCredit|HypoVereinsbank|DE\s*129\s*273\s*380/i.test(text)) return true;
   if (/\b700\s*(?:202\s*70|251\s*75)\b/.test(text)) return true;
@@ -59,11 +63,11 @@ export function parseHvbText(rawText: string, fileName = ''): ParsedRecord[] {
   const text = normalizeHvbText(rawText);
   // Mehrere Belege in einem PDF? An den Überschriften trennen.
   const parts = text
-    .split(/(?=Wertpapi\s*er\s*-\s*(?:Abrechnung\s*(?:Kauf|Verkauf|Bezug)|Einlösung)|Wertpapiermitteilung\s*-\s*\S)/i)
-    .filter((p) => /Wertpapi\s*er\s*-\s*(?:Abrechnung\s*(?:Kauf|Verkauf|Bezug)|Einlösung)|Wertpapiermitteilung\s*-\s*\S/i.test(p));
+    .split(/(?=(?:Wertpapi\s*er\s*-\s*(?:Abrechnung\s*(?:Kauf|Verkauf|Bezug)|Einlösung)|Bezugsrechte\s*(?:Kauf|Verkauf))|Wertpapiermitteilung\s*-\s*\S)/i)
+    .filter((p) => /(?:Wertpapi\s*er\s*-\s*(?:Abrechnung\s*(?:Kauf|Verkauf|Bezug)|Einlösung)|Bezugsrechte\s*(?:Kauf|Verkauf))|Wertpapiermitteilung\s*-\s*\S/i.test(p));
   const records: ParsedRecord[] = [];
   for (const part of parts) {
-    const r = /Wertpapi\s*er\s*-\s*(?:Abrechnung|Einlösung)/i.test(part) ? parseTrade(part, fileName) : parseIncome(part, fileName);
+    const r = /Wertpapi\s*er\s*-\s*(?:Abrechnung|Einlösung)|Bezugsrechte\s*(?:Kauf|Verkauf)/i.test(part) ? parseTrade(part, fileName) : parseIncome(part, fileName);
     if (r) records.push(r);
   }
   return records;
@@ -73,7 +77,7 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   const warnings: string[] = [];
   // Einlösung (Rückzahlung, z. B. Zertifikat oder Anleihe bei Fälligkeit) wird wie ein Verkauf gebucht
   const isEinloesung = /Wertpapi\s*er\s*-\s*Einlösung/i.test(text);
-  const side = isEinloesung || /Abrechnung\s*Verkauf/i.test(text) ? 'verkauf' : 'kauf';
+  const side = isEinloesung || /(?:Abrechnung|Bezugsrechte)\s*Verkauf/i.test(text) ? 'verkauf' : 'kauf';
 
   // Die Zeilenlage unterscheidet sich je nach PDF-Leser (Druckansicht vs. pdf.js). Deshalb wird
   // abschnittsweise gesucht statt zeilengenau:
