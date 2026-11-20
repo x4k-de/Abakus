@@ -11,6 +11,10 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
   es den Knopf „Kurse aktualisieren“ jetzt auch im Depot. Übertragen wird nur die ISIN. Manuell eingetragene
   Kurse werden nicht überschrieben (außer per Knopf).
 
+- Abrechnungen ohne Kurs („Wertpapier-Abrechnung Kauf“ über die Bezugsstelle, z. B. neue Aktien aus
+  Bezugsrechten bzw. Scrip-Dividende) werden erkannt: Kauf mit 0 € Kurswert, die Provision zählt als Gebühr
+  (und damit zur Mitarbeiter-Erstattung).
+
 ### Behoben
 - Realisierter Gewinn war viel zu hoch, wenn für verkaufte Stücke keine Kaufabrechnung importiert war: Der
   komplette Erlös zählte als Gewinn. Jetzt zählt nur der durch erfasste Käufe gedeckte Anteil; der übrige Erlös

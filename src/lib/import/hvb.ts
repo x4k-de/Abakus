@@ -78,7 +78,9 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   //   [Wertpapierbezeichnung ... Zum Kurs von]  -> Stück/Nennwert, Name, WKN, ISIN
   //   [Zum Kurs von ... Abrechnung]             -> Kurs, Währung, Ausführungstag
   const posStart = text.search(/Wertpapierkennnummer\s*\/\s*ISIN|Wertpapierbezeichnung/);
-  const kursStart = text.search(/Zum\s+Kurs\s+von/);
+  // Bezüge/Zuteilungen (z. B. neue Aktien aus Bezugsrechten) haben keinen Kurs – dann ab „Ausführungstag“
+  let kursStart = text.search(/Zum\s+Kurs\s+von/);
+  if (kursStart < 0) kursStart = text.search(/Ausführungstag\s*\/\s*Zeit/);
   if (posStart < 0 || kursStart < 0 || kursStart < posStart) return undefined;
   const posSection = text
     .slice(posStart, kursStart)
@@ -188,8 +190,10 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
     })();
   if (!reference) warnings.push('Keine Referenz gefunden – doppelte Importe werden über Datum und Betrag erkannt');
 
+  // Ohne Kurs und Kurswert, nur Provision belastet: Zuteilung/Bezug (z. B. Scrip-Dividende, Bezugsrechte)
+  const isBezug = !kursM && !Number.isFinite(kurswert) && Number.isFinite(total) && Number.isFinite(provision) && Math.abs(total - provision) < 0.005;
   if (!Number.isFinite(quantity) || quantity <= 0) warnings.push('Stückzahl nicht erkannt');
-  if (!Number.isFinite(kurswert)) warnings.push('Kurswert nicht erkannt');
+  if (!Number.isFinite(kurswert) && !isBezug) warnings.push('Kurswert nicht erkannt');
   if (!date) warnings.push('Datum nicht erkannt');
 
   const amount = Number.isFinite(kurswert) ? kurswert : Number.isFinite(price) && Number.isFinite(quantity) ? round(price * quantity * (nominal ? 0.01 : 1)) : 0;
@@ -211,6 +215,7 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
       currency,
       priceOriginal: currency && Number.isFinite(priceRaw) ? priceRaw : undefined,
       fxRate: currency ? (Number.isFinite(fxRate) ? fxRate : fxRateDerived) : undefined,
+      note: isBezug ? 'Zuteilung/Bezug ohne Kurswert (nur Provision)' : undefined,
     },
     warnings,
   };

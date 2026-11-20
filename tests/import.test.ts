@@ -104,6 +104,15 @@ describe('HVB-Abrechnungen', () => {
     expect(r.records[0].asset).toMatchObject({ wkn: 'S7T8U9', name: 'MUSTER VALUE FONDS INHABER-ANTEILE C' });
   });
 
+  it('erkennt Zuteilungen ohne Kurs (Bezugsstelle) – nur Provision', () => {
+    const r = parsePdfText(fx('hvb-bezug-pdfjs.txt'), 'bezug.PDF');
+    expect(r.error).toBeUndefined();
+    const [x] = r.records;
+    expect(x.warnings).toEqual([]);
+    expect(x.asset).toMatchObject({ wkn: 'V1W2X3', isin: 'ES0000000012' });
+    expect(x.booking).toMatchObject({ type: 'kauf', date: '2022-06-23', quantity: 10.5, amount: 0, fee: 2.5 });
+  });
+
   it('lehnt fremde PDFs ab', () => {
     expect(parsePdfText('Irgendein Brief', 'x.pdf').error).toBeTruthy();
   });

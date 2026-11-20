@@ -1,0 +1,19 @@
+UniCredit Bank AG
+Wertpapier-Abrechnung Kauf
+- Geschäftsbestätigung vor steuerlicher Behandlung -   Kommission außerbörslich
+Depotnummer   Abrechnungstag   Blatt
+123   45678901   24.06.2022   1
+Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+MUSTER S.A.   V1W2X3
+ST 10,5
+ACCIONES PORT. EM. 6/22 EO 1   ES0000000012
+Ausführungstag/Zeit   Ausführungsort   Verwahrart
+23.06.2022
+Girosammelverwahrung
+00.00.00
+Abrechnung
+Provision   EUR   2,50
+-----------------------
+Belastung (vor Steuern)   EUR   2,50
+Valuta 23.06.2022   -----------------------
+Umsatzreferenz: 20220623BEZ000000012
