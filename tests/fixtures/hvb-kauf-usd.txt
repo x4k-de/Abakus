@@ -1,0 +1,18 @@
+   Wertpapi er-Abrechnung Kauf
+   HVB MitarbeiterBank.
+   Max Mustermann   Ordernummer   Abrechnungsnr.   Urspr. Abrechnungsnr.
+   Musterweg 1   9-WPK- 5555555   6666666
+   Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+   ST 2,000   MUSTER US EQUITY FUND   E5F6G7
+   NAMENS-ANTEILE A USD   LU0000000006
+   Zum Kurs von   Ausführungstag/Zeit   Ausführungsort   Verwahrart
+   USD 54,10   03.03.2026   Girosammelverwahrung
+   Abrechnung
+   Kurswert   USD   108,20
+   Devisenkurs EUR/USD   1,0820
+   Kurswert   EUR   100,00
+   Wertpapierprovision*   EUR   1,50
+   -----------------------
+   Belastung (vor Steuern)   EUR   101,50
+   Umsatzreferenz: 20260303WAB0000000006
+   Kontrahent ist die UniCredit Bank GmbH oder ein Konzernunternehmen.

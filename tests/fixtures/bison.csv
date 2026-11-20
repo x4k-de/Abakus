@@ -1,0 +1,8 @@
+Transaction type; Currency; Asset; Eur (amount); Asset (amount); Asset (market price); Fee; Date (UTC - Coordinated Universal Time)
+Deposit; Eur; ; 200.00; ; ; 0.0000000000; 2020-01-07 08:35:29
+Buy; Eur; Btc; 150.00; 0.02000000; 7500.00; 0; 2020-01-07 09:33:50
+Buy; Eur; Btc; 100.00; 0.01000000; 10000.00; 0; 2024-03-01 10:00:00
+Sell; Eur; Btc; 120.00; 0.01000000; 12000.00; 0; 2024-06-01 10:00:00
+Withdraw; Eur; Btc; ; 0.01500000; 20000.00; 0.0000000000; 2024-07-01 10:00:00
+Deposit; Eur; Btc; ; 0.00500000; 30000.00; 0.0000000000; 2025-01-01 10:00:00
+Buy; Eur; Eth; 50.00; 0.02500000; 2000.00; 0; 2025-01-02 10:00:00

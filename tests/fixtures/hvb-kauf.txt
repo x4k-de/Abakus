@@ -1,0 +1,24 @@
+   Wertpapi er-Abrechnung Kauf
+   - Geschäftsbestätigung vor steuerlicher Behandlung -   Kommission außerbörslich
+   Depotnummer   Abrechnungstag   Blatt
+   123   45678901   02.07.2026   1
+   Depotart   Filiale
+   HVB MitarbeiterBank.
+   Herrn   R e c h n u n g s n u mme r
+   Max Mustermann   Ordernummer   Abrechnungsnr.   Urspr. Abrechnungsnr.
+   Musterweg 1   9-WPK- 1111111   2222222
+   Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+   ST 0,829   MUSTER FLEXIBLE ALLOCATION FD.   A1B2C3
+   ACT.PORT. ND EUR DIS. ON   LU0000000001
+   Zum Kurs von   Ausführungstag/Zeit   Ausführungsort   Verwahrart
+   EUR 117,92   01.07.2026   Girosammelverwahrung
+   18.42.31
+   Abrechnung
+   Kurswert   EUR   97,76
+   Wertpapierprovision*   EUR   2,20
+   -----------------------
+   Belastung (vor Steuern)   EUR   99,96
+   Valuta 03.07.2026   -----------------------
+   Umsatzreferenz: 20260702WAB0000000001
+   Kontrahent ist die UniCredit Bank GmbH oder ein Konzernunternehmen.
+   Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380.

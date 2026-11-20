@@ -1,0 +1,6 @@
+"datetime","date","account_type","category","type","asset_class","name","symbol","shares","price","amount","fee","tax","currency","original_amount","original_currency","fx_rate","description","transaction_id","counterparty_name","counterparty_iban","payment_reference","mcc_code"
+"2025-11-26T10:00:00.000Z","2025-11-26","DEFAULT","TRADING","BUY","CRYPTO","Bitcoin","BTC","0.0010000000","78000.0000000000","-78.00","-1.00","","EUR","","","","Buy trade","aaaa-1111","","","",""
+"2025-11-30T10:00:00.000Z","2025-11-30","DEFAULT","DELIVERY","FREE_RECEIPT","CRYPTO","Bitcoin","BTC","0.0020000000","78400.0000000000","","","","EUR","","","","FREE_RECEIPT BTC","aaaa-2222","","","",""
+"2025-12-05T10:00:00.000Z","2025-12-05","DEFAULT","DELIVERY","FREE_DELIVERY","CRYPTO","Bitcoin","BTC","-0.0030000000","","","","","EUR","","","","FREE_DELIVERY BTC","aaaa-3333","","","",""
+"2025-12-06T10:00:00.000Z","2025-12-06","DEFAULT","TRADING","BUY","FUND","Muster ETF","IE0000000005","1.0000000000","100.0000000000","-100.00","","","EUR","","","","Buy trade","aaaa-4444","","","",""
+"2025-12-07T10:00:00.000Z","2025-12-07","DEFAULT","CASH","TRANSFER_INBOUND","","","","","","500.00","","","EUR","","","","Einzahlung","aaaa-5555","","","",""

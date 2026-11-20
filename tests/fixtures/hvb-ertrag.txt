@@ -1,0 +1,15 @@
+   Wertpapiermitteilung
+   Depotnummer   Bankleitzahl   Datum
+   0123 45678901   700 202 70   14.10.2026
+   Wertpapiermitteilung - Ertragszahlung für Depotnummer 0123 0045678901
+   MUSTER.GL.SEL.DIV.100 U.ETF DE   Wertpapierkennnummer   C3D4E5 / DE0000000003
+   INHABER-ANTEILE
+   Geschäftsjahr   2026/2027
+   -------------------------------------------------------------------------------------
+   Stück   76,982
+   zahlbar mit EUR 0,417165   Bruttobetrag   EUR   32,11
+   -------------------------------------------
+   Valuta 15.10.2026   Gutschrift   EUR   32,11
+   -------------------------------------------------------------------------------------
+   Referenz 20261014KUP0000000003
+   Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380
