@@ -17,7 +17,7 @@ export interface Asset {
   /** Aktueller Kurs je Stück (bei Anleihen in Prozent) */
   currentPrice?: number;
   priceDate?: string;
-  priceSource?: 'manuell' | 'coingecko' | 'letzte-buchung';
+  priceSource?: string; // 'manuell', 'coingecko', 'onvista, Xetra' …
   /** Optionale Notiz */
   note?: string;
   /** Position geschlossen (z. B. Fonds aufgelöst oder komplett verkauft) */

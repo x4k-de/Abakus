@@ -17,6 +17,8 @@ ohne App Store. **Alle Daten bleiben auf dem Gerät**; es gibt keinen Server.
   400 € – je Jahr manuell überschreibbar.
 - **Krypto-Reiter:** Bestand je Plattform/Wallet, Haltefrist (Anteil älter als 1 Jahr), aktuelle
   Kurse per Knopfdruck (CoinGecko).
+- **Aktuelle Kurse automatisch:** Wertpapiere per ISIN über onvista, Krypto über CoinGecko. Beim Öffnen
+  werden veraltete Kurse nachgeladen; übertragen wird nur die ISIN bzw. das Coin-Kürzel.
 - **Jede Buchung ist bearbeitbar**, fehlende Buchungen lassen sich von Hand nachtragen.
 - **Positionen schließen** – geschlossene Fonds bleiben mit Gewinn/Verlust in der Historie.
 - **Backup** als Datei exportieren/einspielen (z. B. in iCloud Drive).

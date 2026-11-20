@@ -48,6 +48,8 @@ export interface Position {
   bookingCount: number;
   /** Mehr verkauft als gekauft – vermutlich fehlen Kaufabrechnungen */
   missingBuys: boolean;
+  /** Verkaufserlös von Stücken ohne erfassten Kauf (zählt nicht als Gewinn) */
+  uncoveredProceeds: number;
   firstDate?: string;
   lastDate?: string;
 }
@@ -100,6 +102,7 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
   let realized = 0;
   let lastTradePrice: number | undefined;
   let missingBuys = false;
+  let uncoveredProceeds = 0;
   const perKonto: Record<string, number> = {};
   const lots: Lot[] = [];
   const move = (konto: string, q: number) => {
@@ -128,11 +131,16 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
         if (b.quantity > qty + 1e-6) missingBuys = true;
         const costOut = avg * q;
         cost -= costOut;
-        qty -= b.quantity;
-        move(b.konto, -b.quantity);
-        consumeLots(lots, b.quantity);
+        // Bestand nie negativ: ohne erfasste Käufe kann nur der vorhandene Bestand abgehen
+        qty -= q;
+        move(b.konto, -q);
+        consumeLots(lots, q);
         if (b.type === 'verkauf') {
-          realized += (b.amount || 0) - (opts.feesInCost ? b.fee || 0 : 0) - (b.tax || 0) - costOut;
+          // Fehlen Käufe (mehr verkauft als vorhanden), zählt nur der gedeckte Anteil als Gewinn –
+          // sonst würde der Erlös der fehlenden Stücke komplett als Gewinn erscheinen.
+          const share = b.quantity > 0 ? q / b.quantity : 1;
+          realized += ((b.amount || 0) - (opts.feesInCost ? b.fee || 0 : 0) - (b.tax || 0)) * share - costOut;
+          if (share < 1 - 1e-9) uncoveredProceeds += (b.amount || 0) * (1 - share);
           if (!opts.feesInCost) extraCosts += b.fee || 0;
           if (b.price) lastTradePrice = b.price;
         }
@@ -213,6 +221,7 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
     nextTaxFreeDate,
     bookingCount: sorted.length,
     missingBuys,
+    uncoveredProceeds,
     firstDate: sorted[0]?.date,
     lastDate: sorted[sorted.length - 1]?.date,
   };
@@ -277,8 +286,9 @@ export function computeYears(
         const avg = qty > EPS ? cost / qty : 0;
         const q = Math.min(b.quantity, qty);
         cost -= avg * q;
-        qty -= b.quantity;
-        if (b.type === 'verkauf') row(b.date.slice(0, 4)).realized += (b.amount || 0) - (opts.feesInCost ? b.fee || 0 : 0) - (b.tax || 0) - avg * q;
+        qty -= q;
+        const share = b.quantity > 0 ? q / b.quantity : 1;
+        if (b.type === 'verkauf') row(b.date.slice(0, 4)).realized += ((b.amount || 0) - (opts.feesInCost ? b.fee || 0 : 0) - (b.tax || 0)) * share - avg * q;
       } else if (b.type === 'gebuehr' && b.quantity > 0) {
         qty -= b.quantity;
       }

@@ -15,7 +15,9 @@
 | Oberfläche | `src/pages/*`, `src/components/*` |
 
 Es gibt keinen Server. Die App ist eine statische Webseite; Daten liegen in der IndexedDB des Browsers.
-Netzwerkzugriffe: nur CoinGecko für Krypto-Kurse (es werden nur Coin-Namen übertragen).
+Netzwerkzugriffe: nur für Kurse – CoinGecko für Krypto (es werden nur Coin-Namen übertragen) und onvista für
+Wertpapiere (es wird nur die ISIN übertragen, keine Stückzahlen oder Beträge). Beim Öffnen des Depots werden
+Kurse, die nicht von heute sind, automatisch nachgeladen; manuell eingetragene Kurse bleiben unangetastet.
 
 ## Datenmodell
 
@@ -32,6 +34,8 @@ Netzwerkzugriffe: nur CoinGecko für Krypto-Kurse (es werden nur Coin-Namen übe
 - **Dividende/Zinsen:** Ertrag netto = Betrag − Steuer − Gebühr. Beim PDF-Import ist der Betrag bereits die
   Gutschrift aufs Konto (nach ausländischer Quellensteuer); die Quellensteuer steht nur in der Notiz.
 - **Ø-Kaufkurs** = Einstand / Bestand. **Ø nach Ausschüttungen** = (Einstand − Erträge netto) / Bestand.
+- **Verkauf ohne erfassten Kauf:** Nur der gedeckte Anteil zählt als realisierter Gewinn; der Erlös der
+  übrigen Stücke wird separat ausgewiesen (Hinweis „Käufe fehlen?“). Der Bestand wird nie negativ.
 - **Gesamtergebnis** = Kursgewinn + realisiert + Erträge − separate Kosten (Gebühren, Steuern).
   Das Ergebnis ist unabhängig davon, ob Gebühren im Einstand stecken.
 - **Anleihen:** Menge = Nennwert, Kurs in Prozent (Faktor 0,01).
@@ -45,5 +49,6 @@ Netzwerkzugriffe: nur CoinGecko für Krypto-Kurse (es werden nur Coin-Namen übe
 
 - Kapitalertragsteuer steht nicht in den HVB-Belegen (separat auf dem Kontoauszug) → bei Bedarf als
   Buchung „Steuer“ erfassen.
-- Kurse für Wertpapiere werden derzeit manuell eingetragen.
+- Wertpapierkurse: onvista-Suche per ISIN, dann bester EUR-Kurs (Xetra, Tradegate, … ). Fonds ohne
+  Börsenkurs bzw. ohne EUR-Notiz bleiben ohne Kurs und können manuell gepflegt werden.
 - Trade-Republic-Wertpapiere werden beim Import noch übersprungen.

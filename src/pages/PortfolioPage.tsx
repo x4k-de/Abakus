@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookingEditor } from '../components/BookingEditor';
 import { PositionDetail } from '../components/PositionDetail';
 import { Empty, Money, Pct, Stat } from '../components/ui';
 import { computeSummary, type Position } from '../lib/calc';
 import type { AppData } from '../lib/hooks';
 import { fmtEur, fmtPrice, fmtQty, isoToDe, todayIso } from '../lib/num';
-import { updateCryptoPrices } from '../lib/prices';
+import { updatePrices } from '../lib/prices';
 import { ASSET_TYP_LABEL, type AssetKind, type Booking } from '../lib/types';
 
 interface Props {
@@ -27,18 +27,28 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
   const detail = all.find((p) => p.asset.id === detailId);
   const isCrypto = kind === 'krypto';
 
-  const refreshPrices = async () => {
+  const refreshPrices = async (auto = false) => {
     setBusy(true);
-    setMsg('');
+    if (!auto) setMsg('');
     try {
-      const r = await updateCryptoPrices();
-      setMsg(`${r.updated} Kurse aktualisiert${r.missing.length ? ` · ohne Kursquelle: ${r.missing.join(', ')}` : ''}`);
+      const open = s.positions.map((p) => p.asset).filter((a) => !auto || a.priceSource !== 'manuell');
+      const r = await updatePrices(kind, open);
+      setMsg(`${r.updated} Kurse aktualisiert${r.missing.length ? ` · ohne Kurs: ${r.missing.join(', ')}` : ''}`);
     } catch (e) {
-      setMsg((e as Error).message);
+      setMsg(auto ? 'Kurse konnten nicht automatisch geladen werden (offline?)' : (e as Error).message);
     } finally {
       setBusy(false);
     }
   };
+
+  // Beim Öffnen automatisch aktualisieren, wenn ein Kurs nicht von heute ist (einmal je Sitzung und Reiter)
+  const autoDone = useRef(false);
+  useEffect(() => {
+    if (!data.loaded || autoDone.current || !s.positions.length) return;
+    autoDone.current = true;
+    if (s.positions.some((p) => p.asset.priceSource !== 'manuell' && p.asset.priceDate !== today)) void refreshPrices(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.loaded, s.positions.length]);
 
   if (data.loaded && !all.length) {
     return (
@@ -88,9 +98,9 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
         )}
       </section>
 
-      {isCrypto && (
+      {(
         <div className="row">
-          <button className="btn" onClick={refreshPrices} disabled={busy}>
+          <button className="btn" onClick={() => refreshPrices()} disabled={busy}>
             {busy ? 'Lade Kurse …' : '↻ Kurse aktualisieren'}
           </button>
           {msg && <span className="muted small">{msg}</span>}
