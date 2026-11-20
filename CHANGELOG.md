@@ -3,6 +3,19 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.2.0] – 2026-11-20
+
+### Neu
+- Aktuelle Wertpapierkurse werden automatisch online geholt (onvista, per ISIN; bevorzugt EUR-Kurs von Xetra
+  bzw. Tradegate). Beim Öffnen des Depots werden Kurse, die nicht von heute sind, nachgeladen; zusätzlich gibt
+  es den Knopf „Kurse aktualisieren“ jetzt auch im Depot. Übertragen wird nur die ISIN. Manuell eingetragene
+  Kurse werden nicht überschrieben (außer per Knopf).
+
+### Behoben
+- Realisierter Gewinn war viel zu hoch, wenn für verkaufte Stücke keine Kaufabrechnung importiert war: Der
+  komplette Erlös zählte als Gewinn. Jetzt zählt nur der durch erfasste Käufe gedeckte Anteil; der übrige Erlös
+  wird in der Position mit dem Hinweis „Käufe fehlen?“ ausgewiesen. Der Bestand kann nicht mehr negativ werden.
+
 ## [0.1.3] – 2026-11-20
 
 ### Behoben

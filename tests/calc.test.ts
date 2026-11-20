@@ -114,5 +114,20 @@ describe('Geschlossene Positionen', () => {
   it('warnt, wenn mehr verkauft als gekauft wurde', () => {
     const p = computePosition(etf, [b({ type: 'verkauf', quantity: 5, amount: 50 })], '2026-01-01');
     expect(p.missingBuys).toBe(true);
+    expect(p.quantity).toBe(0);
+    expect(p.realized).toBe(0); // Erlös ohne Kauf ist kein Gewinn
+    expect(p.uncoveredProceeds).toBe(50);
+  });
+
+  it('bei teilweise fehlenden Käufen zählt nur der gedeckte Anteil', () => {
+    const p = computePosition(etf, [
+      b({ date: '2025-01-01', quantity: 2, amount: 20 }),
+      b({ date: '2025-02-01', type: 'verkauf', quantity: 10, amount: 150 }),
+      b({ date: '2025-03-01', quantity: 1, amount: 12 }),
+    ], '2026-01-01');
+    expect(p.realized).toBeCloseTo(30 - 20, 6);
+    expect(p.uncoveredProceeds).toBeCloseTo(120, 6);
+    expect(p.quantity).toBe(1);
+    expect(p.costBasis).toBeCloseTo(12, 6);
   });
 });

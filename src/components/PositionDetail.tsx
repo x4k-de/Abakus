@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Position } from '../lib/calc';
 import { sortBookings } from '../lib/calc';
 import { db } from '../lib/db';
-import { fmtPrice, fmtQty, isoToDe, parseDe, round, todayIso, uid } from '../lib/num';
+import { fmtEur, fmtPrice, fmtQty, isoToDe, parseDe, round, todayIso, uid } from '../lib/num';
 import { ASSET_TYP_LABEL, type AssetTyp, BOOKING_TYPE_LABEL, type Booking } from '../lib/types';
 import { Field, Money, Pct, Sheet, Stat } from './ui';
 
@@ -89,7 +89,11 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
       </div>
 
       {p.missingBuys && (
-        <p className="note warn">Es wurde mehr verkauft als gekauft. Vermutlich fehlen Kaufabrechnungen – bitte importieren oder nachtragen, sonst ist der Gewinn zu hoch.</p>
+        <p className="note warn">
+          Es wurde mehr verkauft als gekauft – vermutlich fehlen ältere Kaufabrechnungen. Der Erlös dieser Stücke (
+          {fmtEur(p.uncoveredProceeds)}) zählt deshalb nicht als Gewinn. Importiere die fehlenden Käufe oder trage sie nach,
+          dann stimmt der realisierte Gewinn.
+        </p>
       )}
       <div className="stats">
         <Stat label="Bestand">{fmtQty(p.quantity)}</Stat>
