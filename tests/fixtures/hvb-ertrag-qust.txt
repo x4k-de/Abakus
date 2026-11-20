@@ -1,0 +1,17 @@
+   Wertpapiermitteilung
+   Depotnummer   Bankleitzahl   Datum
+   0123 45678901   700 202 70   08.09.2026
+   Wertpapiermitteilung - Ertragszahlung für Depotnummer 0123 0045678901
+   Emittentenland   Niederlande
+   MUSTER DM DIVIDEND.UC.ETF   Wertpapierkennnummer   H8J9K0 / NL0000000008
+   AANDELEN OOP TOONDER O.N.   Ertrag per   09.09.2026
+   -------------------------------------------------------------------------------------
+   Stück   100,000
+   zahlbar mit EUR 0,40   Bruttobetrag   EUR   40,00
+   Quellensteuer Ausland   15,00 %   (QuSt)   EUR   6,00 -
+   -------------------------------------------
+   Valuta 09.09.2026   Gutschrift   EUR   34,00
+   -------------------------------------------------------------------------------------
+   Referenz 20260901KUP0000000008
+   Im Ausland einbehaltene Quellensteuer ist unter Umständen erstattungsfähig.
+   Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380

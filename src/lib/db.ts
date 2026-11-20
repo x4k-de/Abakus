@@ -16,7 +16,35 @@ export class AbakusDB extends Dexie {
       bookings: 'id, assetId, type, date, konto, reference',
       settings: 'id',
     });
+    // v2: Erträge aus PDFs zählen netto (Gutschrift aufs Konto); Quellensteuer ist ein reiner Abzug.
+    this.version(2)
+      .stores({})
+      .upgrade((tx) => tx.table('bookings').toCollection().modify((b: Booking) => migrateIncomeToNet(b)));
   }
+}
+
+/**
+ * Ältere Importe haben Erträge brutto mit der Quellensteuer als „Steuer“ gespeichert. Für die
+ * Auswertung war das gleichwertig, angezeigt wurde aber der Bruttobetrag. Umgestellt auf den
+ * Betrag, der auf dem Konto ankommt. Von Hand bearbeitete Buchungen bleiben unverändert.
+ * Gibt true zurück, wenn die Buchung geändert wurde.
+ */
+export function migrateIncomeToNet(b: Booking): boolean {
+  if (b.source !== 'pdf' || b.edited || (b.type !== 'dividende' && b.type !== 'zinsen')) return false;
+  // Prüf-Hinweise zu Quellensteuer/Fremdwährungs-Gutschrift sind damit erledigt
+  const hint = b.hint
+    ?.split(' · ')
+    .filter((h) => !/Quellensteuer|EUR-Gutschrift übernommen/.test(h))
+    .join(' · ');
+  const hintChanged = (hint || undefined) !== b.hint;
+  b.hint = hint || undefined;
+  if (!(b.tax > 0)) return hintChanged;
+  const tax = b.tax;
+  b.amount = Math.round((b.amount - tax) * 100) / 100;
+  b.tax = 0;
+  const qs = `Quellensteuer/Abzüge ${tax.toFixed(2).replace('.', ',')} € einbehalten`;
+  b.note = b.note ? `${b.note} · ${qs}` : qs;
+  return true;
 }
 
 export const db = new AbakusDB();

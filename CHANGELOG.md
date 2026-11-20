@@ -3,6 +3,21 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.1.2] – 2026-11-20
+
+### Geändert
+- Erträge (Ausschüttungen, Dividenden, Zinsen) aus HVB-PDFs zählen jetzt automatisch mit dem Betrag, der
+  auf dem Konto gutgeschrieben wird. Ausländische Quellensteuer und Spesen sind ein reiner Abzug (keine
+  Erstattung) und stehen nur noch als Notiz an der Buchung („brutto …, Quellensteuer … einbehalten“).
+  Der Hinweis „bitte prüfen“ entfällt.
+- Erträge in USD: Die EUR-Gutschrift wird ohne Prüfhinweis übernommen; der Umrechnungskurs wird gespeichert.
+- Schon importierte Erträge werden beim ersten Start einmalig auf netto umgestellt (Datenbank-Version 2).
+  Von Hand bearbeitete Buchungen bleiben unverändert. Das Gesamtergebnis ändert sich dadurch nicht.
+
+### Behoben
+- Kauf/Verkauf in Fremdwährung ohne Devisenkurs im Beleg: Der EUR-Betrag wird aus Belastung bzw.
+  Gutschrift und Provision abgeleitet statt 0,00 € anzuzeigen.
+
 ## [0.1.1] – 2026-11-20
 
 ### Behoben
