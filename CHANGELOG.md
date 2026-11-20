@@ -3,6 +3,13 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.3.1] – 2026-11-20
+
+### Behoben
+- „Bezugsrechte Kauf/Verkauf“ wurden nicht erkannt. Werden jetzt wie normale Käufe/Verkäufe gelesen;
+  Maklercourtage und Provision zählen als Gebühr.
+- Sehr alte Belege (etwa 2017) mit deutschem 7-Bit-Zeichensatz („Ausf}hrungstag“) werden in Umlaute übersetzt.
+
 ## [0.3.0] – 2026-11-20
 
 ### Neu
