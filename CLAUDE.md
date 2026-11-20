@@ -6,5 +6,5 @@
 - **Keine echten Finanzdaten** einchecken (PDFs, CSV-Exporte, Backups, Tabellen). Tests nur mit erfundenen
   Daten in `tests/fixtures`.
 - Vor dem Commit: `npm test` und `npm run build`.
-- Design: dunkles Grün-Thema (Palette #051F20 #0B2B26 #163832 #235347 #8EB69B #DAF1DE) mit Glas-Karten und
-  Leuchteffekten.
+- Design: Flächen und Hintergrund in dunklen Grautönen, 3D-Karten (Lichtkante, Kartendicke, tiefer Schatten),
+  Grün (#8EB69B #DAF1DE, Glow #7FF5BD) nur für Leuchteffekte und Schrift. Depotwert groß und kräftig.

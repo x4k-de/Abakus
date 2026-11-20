@@ -3,6 +3,15 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.5.0] – 2026-11-20
+
+### Geändert
+- **Karten mit deutlichem 3D-Effekt** nach der Vorlage: helle Lichtkante oben, sichtbare Kartendicke, tiefer
+  Schatten; unter der Depotwert-Karte ein grüner Lichtschein auf dem Untergrund.
+- **Grautöne statt Grün** für Hintergrund und Kartenflächen; Grün nur noch für Leuchteffekte und Schrift.
+- **Depotwert dominanter:** größer, kräftiger Schnitt mit leichtem Leuchten.
+- Leuchtender Glasteil der Karte heller, Werte darauf in Weiß für guten Kontrast.
+
 ## [0.4.0] – 2026-11-20
 
 ### Geändert
