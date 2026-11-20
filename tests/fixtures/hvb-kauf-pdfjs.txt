@@ -1,0 +1,24 @@
+W e r t p a p i e r - A b r e c h n u n g K a u f
+- Geschäftsbestätigung vor steuerlicher Behandlung -   Kommission außerbörslich
+Depotnummer   Abrechnungstag   Blatt
+123   45678901   01.07.2026   1
+HVB MitarbeiterBank.
+Herrn   R e c h n u n g s n u m m e r
+Max Mustermann   Ordernummer   Abrechnungsnr.   Urspr. Abrechnungsnr.
+Musterweg   1   9-WPK-   7777777   8888888
+Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+MUSTER.ST.GL.DIV.100 U.ETF DE   F6G7H8
+ST 1,29
+INHABER-ANTEILE   DE0000000007
+Zum Kurs von   Ausführungstag/Zeit   Ausführungsort   Verwahrart
+01.07.2026
+EUR 38,17   Girosammelverwahrung
+17.35.54
+Abrechnung
+Kurswert   EUR   49,24
+Wertpapierprovision*   EUR   0,74
+-----------------------
+Belastung (vor Steuern)   EUR   49,98
+Valuta 03.07.2026   -----------------------
+Umsatzreferenz: 20260701WAB0000000007
+Kontrahent ist die UniCredit Bank GmbH oder ein Konzernunternehmen.
