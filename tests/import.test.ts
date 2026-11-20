@@ -97,6 +97,13 @@ describe('HVB-Abrechnungen', () => {
     expect(x.booking).toMatchObject({ type: 'verkauf', date: '2026-01-13', quantity: 20, currency: 'USD', priceOriginal: 60, fxRate: 1.25, amount: 964, fee: 4 });
   });
 
+  it('erkennt ältere Ertragsmitteilungen ohne Bankangaben auf Seite 1', () => {
+    const r = parsePdfText(fx('hvb-ertrag-alt.txt'), 'alt.PDF');
+    expect(r.error).toBeUndefined();
+    expect(r.records[0].booking).toMatchObject({ type: 'dividende', date: '2025-01-21', quantity: 0.5, amount: 3.5 });
+    expect(r.records[0].asset).toMatchObject({ wkn: 'S7T8U9', name: 'MUSTER VALUE FONDS INHABER-ANTEILE C' });
+  });
+
   it('lehnt fremde PDFs ab', () => {
     expect(parsePdfText('Irgendein Brief', 'x.pdf').error).toBeTruthy();
   });

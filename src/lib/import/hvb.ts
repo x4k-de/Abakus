@@ -47,7 +47,12 @@ export function normalizeHvbText(text: string): string {
 /** Ist das überhaupt ein HVB-Wertpapierbeleg? */
 export function isHvbDocument(rawText: string): boolean {
   const text = normalizeHvbText(rawText);
-  return /Wertpapi\s*er\s*-\s*Abrechnung|Wertpapiermitteilung/i.test(text) && /HVB|UniCredit|HypoVereinsbank|DE\s*129\s*273\s*380/i.test(text);
+  if (!/Wertpapi\s*er\s*-\s*Abrechnung|Wertpapiermitteilung/i.test(text)) return false;
+  // Bank-Merkmale; ältere Mitteilungen (bis 2025) nennen die Bank nur über die Bankleitzahl
+  if (/HVB|UniCredit|HypoVereinsbank|DE\s*129\s*273\s*380/i.test(text)) return true;
+  if (/\b700\s*(?:202\s*70|251\s*75)\b/.test(text)) return true;
+  // Aufbau einer HVB-Ertragsmitteilung: Überschrift mit Depotnummer plus WKN / ISIN
+  return /Wertpapiermitteilung\s*-\s*\S+\s+für\s+Depotnummer/i.test(text) && /Wertpapierkennnummer\s+[A-Z0-9]{6}\s*\/\s*[A-Z]{2}[A-Z0-9]{9}\d/.test(text);
 }
 
 export function parseHvbText(rawText: string, fileName = ''): ParsedRecord[] {
