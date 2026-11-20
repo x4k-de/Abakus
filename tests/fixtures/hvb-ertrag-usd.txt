@@ -1,0 +1,13 @@
+   Wertpapiermitteilung - Ertragszahlung für Depotnummer 0123 0045678901
+   Emittentenland   Irland
+   MUSTER CORE EM IMI U.ETF   Wertpapierkennnummer   L1M2N3 / IE0000000009
+   REGISTERED SHS USD (DIST) O.N.   Ertrag per   30.09.2026
+   -------------------------------------------------------------------------------------
+   Stück   500,000
+   zahlbar mit USD 0,10   Bruttobetrag   USD   50,00
+   Umrechnungskurs   1 EUR = 1,2500 USD   Bruttobetrag   EUR   40,00
+   Angefallene Devisenkurskosten 0,20   EUR
+   -------------------------------------------
+   Valuta 02.10.2026   Gutschrift   EUR   40,00
+   Referenz 20260930KUP0000000009
+   Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380

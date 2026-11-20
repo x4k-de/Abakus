@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { parseHvbText } from '../src/lib/import/hvb';
 import { itemsToLines } from '../src/lib/import/pdfLines';
 import { parseCsvText, parsePdfText } from '../src/lib/import/importService';
+import { migrateIncomeToNet } from '../src/lib/db';
+import type { Booking } from '../src/lib/types';
 
 // Alle Testdaten sind erfunden – es werden niemals echte Abrechnungen eingecheckt.
 const fx = (n: string) => readFileSync(join(__dirname, 'fixtures', n), 'utf8');
@@ -39,6 +41,32 @@ describe('HVB-Abrechnungen', () => {
     expect(r.booking.reference).toBe('20261014KUP0000000003');
   });
 
+  it('nimmt bei Quellensteuer nur die Gutschrift als Ertrag – ohne Prüf-Hinweis', () => {
+    const [r] = parseHvbText(fx('hvb-ertrag-qust.txt'));
+    expect(r.warnings).toEqual([]);
+    expect(r.booking).toMatchObject({ type: 'dividende', date: '2026-09-09', quantity: 100, amount: 34, tax: 0 });
+    expect(r.booking.note).toContain('Quellensteuer 6,00 € einbehalten');
+    expect(r.asset).toMatchObject({ wkn: 'H8J9K0', isin: 'NL0000000008' });
+  });
+
+  it('USD-Ertrag: EUR-Gutschrift ohne Prüf-Hinweis, mit Umrechnungskurs', () => {
+    const [r] = parseHvbText(fx('hvb-ertrag-usd.txt'));
+    expect(r.warnings).toEqual([]);
+    expect(r.booking).toMatchObject({ amount: 40, tax: 0, currency: 'USD', fxRate: 1.25, date: '2026-10-02' });
+    expect(r.booking.note).toContain('brutto 50,00 USD');
+  });
+
+  it('Erträge älterer Importe werden auf netto umgestellt', () => {
+    const b = {
+      id: 'x', assetId: 'a', type: 'dividende', date: '2026-09-09', konto: 'HVB', quantity: 100, price: 0.4,
+      amount: 40, fee: 0, tax: 6, source: 'pdf', createdAt: '', updatedAt: '',
+      hint: 'Abzüge (z. B. ausländische Quellensteuer) als Steuer übernommen – bitte prüfen',
+    } as Booking;
+    expect(migrateIncomeToNet(b)).toBe(true);
+    expect(b).toMatchObject({ amount: 34, tax: 0, hint: undefined });
+    expect(migrateIncomeToNet({ ...b, tax: 5, edited: true })).toBe(false);
+  });
+
   it('erkennt Anleihe-Zinsen mit Nennwert', () => {
     const [r] = parseHvbText(fx('hvb-zinsen.txt'));
     expect(r.booking).toMatchObject({ type: 'zinsen', date: '2026-06-29', quantity: 2000, amount: 13.76 });
@@ -58,6 +86,15 @@ describe('HVB-Abrechnungen', () => {
     const [r] = parseHvbText(fx('hvb-kauf-usd.txt'));
     expect(r.booking).toMatchObject({ type: 'kauf', quantity: 2, amount: 100, fee: 1.5, currency: 'USD', priceOriginal: 54.1, fxRate: 1.082 });
     expect(r.booking.price).toBeCloseTo(50, 6);
+  });
+
+  it('liest USD-Verkäufe mit Umrechnungskurs und Devisenkosten (Titel in zwei Stücken)', () => {
+    const r = parsePdfText(fx('hvb-verkauf-usd-pdfjs.txt'), 'v.PDF');
+    expect(r.error).toBeUndefined();
+    const [x] = r.records;
+    expect(x.warnings).toEqual([]);
+    expect(x.asset).toMatchObject({ wkn: 'P4Q5R6', isin: 'LU0000000010' });
+    expect(x.booking).toMatchObject({ type: 'verkauf', date: '2026-01-13', quantity: 20, currency: 'USD', priceOriginal: 60, fxRate: 1.25, amount: 964, fee: 4 });
   });
 
   it('lehnt fremde PDFs ab', () => {

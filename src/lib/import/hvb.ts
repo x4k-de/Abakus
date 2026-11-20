@@ -15,6 +15,8 @@ export const HVB_KONTO = 'HVB';
 const NUM = '([\\d.]+(?:,\\d+)?)';
 const ISIN_RE = /\b([A-Z]{2}[A-Z0-9]{9}\d)\b/;
 
+const fmt = (n: number) => n.toFixed(2).replace('.', ',');
+
 function match(text: string, re: RegExp): string | undefined {
   const m = re.exec(text);
   return m ? m[1] : undefined;
@@ -34,7 +36,12 @@ function guessTyp(name: string, nominal: boolean): AssetTyp {
  * zwischen jedem Zeichen.
  */
 export function normalizeHvbText(text: string): string {
-  return text.replace(/(?:^|(?<=\s))((?:\S ){3,}\S)(?=\s|$)/gm, (m) => m.replace(/ /g, ''));
+  return (
+    text
+      .replace(/(?:^|(?<=\s))((?:\S ){3,}\S)(?=\s|$)/gm, (m) => m.replace(/ /g, ''))
+      // Je nach PDF zerfällt das gesperrte Wort in zwei Textstücke („Verk auf“, „Ka uf“)
+      .replace(/(Abrechnung\s*)(V\s?e\s?r\s?k\s?a\s?u\s?f|K\s?a\s?u\s?f)(?![a-zäöü])/g, (_, a: string, w: string) => a + w.replace(/\s/g, ''))
+  );
 }
 
 /** Ist das überhaupt ein HVB-Wertpapierbeleg? */
@@ -122,19 +129,33 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   const kurswertEur = parseDe(match(text, new RegExp(`Kurswert\\s+EUR\\s+${NUM}`)));
   const total = parseDe(match(text, new RegExp(`(?:Belastung|Gutschrift)\\s*(?:\\(vor\\s+Steuern\\))?\\s+EUR\\s+${NUM}`)));
   const provision = parseDe(match(text, new RegExp(`provision\\*?\\s+EUR\\s+${NUM}`, 'i')));
-  const fxRate = parseDe(match(text, new RegExp(`Devisenkurs[^\\d\\n]*${NUM}`)));
+  const fxRate = parseDe(
+    match(text, new RegExp(`Devisenkurs[^\\d\\n]*${NUM}`)) ?? match(text, new RegExp(`Umrechnungskurs\\s+1\\s+EUR\\s*=\\s*${NUM}`)),
+  );
+  // Devisenkosten (Aufschlag auf den Umrechnungskurs) sind Kosten wie die Provision
+  const devKosten = Math.abs(parseDe(match(text, new RegExp(`Devisenkosten\\s+-?${NUM}\\s*EUR`))));
   const kurswertFx = currency ? parseDe(match(text, new RegExp(`Kurswert\\s+${currency}\\s+${NUM}`))) : NaN;
 
   // Kurswert in EUR: direkt aus dem Beleg, sonst über den Devisenkurs umrechnen
   let kurswert = kurswertEur;
+  let fxRateDerived: number | undefined;
   if (!Number.isFinite(kurswert) && currency) {
     const fxValue = Number.isFinite(kurswertFx) ? kurswertFx : priceRaw * quantity;
     if (Number.isFinite(fxRate) && fxRate > 0) {
       kurswert = round(fxValue / fxRate);
-      warnings.push(`Kurswert aus ${currency} mit Devisenkurs ${fxRate} umgerechnet – bitte prüfen`);
+    } else if (Number.isFinite(total)) {
+      // Kein Devisenkurs im Beleg: EUR-Betrag aus Belastung/Gutschrift und Provision ableiten
+      const prov = Number.isFinite(provision) ? provision : 0;
+      kurswert = round(side === 'kauf' ? total - prov : total + prov);
+      if (Number.isFinite(kurswertFx) && kurswert > 0) fxRateDerived = Math.round((kurswertFx / kurswert) * 1e6) / 1e6;
     } else {
       warnings.push(`Abrechnung in ${currency}: Devisenkurs nicht gefunden – bitte EUR-Betrag prüfen`);
     }
+  }
+
+  // Kurswert vor Devisenkosten, damit diese als Gebühr zählen (Gutschrift bzw. Belastung bleibt gleich)
+  if (Number.isFinite(devKosten) && devKosten > 0 && Number.isFinite(kurswert) && !Number.isFinite(kurswertEur)) {
+    kurswert = round(side === 'kauf' ? kurswert - devKosten : kurswert + devKosten);
   }
 
   let fee = 0;
@@ -184,7 +205,7 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
       reference,
       currency,
       priceOriginal: currency && Number.isFinite(priceRaw) ? priceRaw : undefined,
-      fxRate: currency && Number.isFinite(fxRate) ? fxRate : undefined,
+      fxRate: currency ? (Number.isFinite(fxRate) ? fxRate : fxRateDerived) : undefined,
     },
     warnings,
   };
@@ -219,15 +240,22 @@ function parseIncome(text: string, fileName: string): ParsedRecord | undefined {
 
   const fxCur = match(text, /Bruttobetrag\s+([A-Z]{3})\s/);
   const isFx = !!fxCur && fxCur !== 'EUR';
-  if (isFx) warnings.push(`Ertrag in ${fxCur}: EUR-Gutschrift übernommen (nach Abzügen) – bitte prüfen`);
-  const amount = Number.isFinite(brutto) ? brutto : Number.isFinite(gutschrift) ? gutschrift : NaN;
+  // Als Ertrag zählt nur, was tatsächlich auf dem Konto ankommt (Gutschrift). Ausländische
+  // Quellensteuer und Spesen sind reine Abzüge und werden nicht erstattet.
+  const amount = Number.isFinite(gutschrift) ? gutschrift : Number.isFinite(brutto) ? brutto : NaN;
   if (!Number.isFinite(amount)) warnings.push('Betrag nicht erkannt');
-  // Abzüge zwischen Brutto und Gutschrift (z. B. Quellensteuer, Spesen)
-  let tax = 0;
-  if (Number.isFinite(brutto) && Number.isFinite(gutschrift) && brutto - gutschrift > 0.004) {
-    tax = round(brutto - gutschrift);
-    warnings.push('Abzüge (z. B. ausländische Quellensteuer) als Steuer übernommen – bitte prüfen');
+  const notes: string[] = [];
+  let fxRateIncome = NaN;
+  if (kindWord) notes.push(`HVB ${kindWord}`);
+  const quSt = parseDe(match(text, new RegExp(`Quellensteuer[^\\n]*?(?:EUR|${fxCur ?? 'EUR'})\\s+${NUM}\\s*-?`)));
+  if (isFx) {
+    const bruttoFx = parseDe(match(text, new RegExp(`Bruttobetrag\\s+${fxCur}\\s+${NUM}`)));
+    if (Number.isFinite(bruttoFx)) notes.push(`brutto ${fmt(bruttoFx)} ${fxCur}`);
+    fxRateIncome = parseDe(match(text, new RegExp(`Umrechnungskurs\\s+1\\s+EUR\\s*=\\s*${NUM}`)));
+  } else if (Number.isFinite(brutto) && Number.isFinite(amount) && brutto - amount > 0.004) {
+    notes.push(`brutto ${fmt(brutto)} €`);
   }
+  if (Number.isFinite(quSt) && quSt > 0) notes.push(`Quellensteuer ${fmt(quSt)}${isFx ? ` ${fxCur}` : ' €'} einbehalten`);
   if (!reference) warnings.push('Keine Referenz gefunden');
   if (!date) warnings.push('Datum nicht erkannt');
 
@@ -241,12 +269,13 @@ function parseIncome(text: string, fileName: string): ParsedRecord | undefined {
       price: Number.isFinite(perUnit) ? perUnit : 0,
       amount: Number.isFinite(amount) ? amount : 0,
       fee: 0,
-      tax,
+      tax: 0,
       source: 'pdf',
       sourceFile: fileName,
       reference,
       currency: isFx ? fxCur : undefined,
-      note: kindWord ? `HVB ${kindWord}` : undefined,
+      fxRate: isFx && Number.isFinite(fxRateIncome) ? fxRateIncome : undefined,
+      note: notes.join(' · ') || undefined,
     },
     warnings,
   };

@@ -29,7 +29,8 @@ Netzwerkzugriffe: nur CoinGecko für Krypto-Kurse (es werden nur Coin-Namen übe
 - **Kauf:** Bestand + Menge; Einstand + Kurswert (+ Gebühr, falls „Gebühren im Einstand“ aktiv).
 - **Verkauf:** anteiliger Einstand = Ø-Einstand × Menge; realisiert = Erlös − anteiliger Einstand
   (− Gebühr, falls aktiv).
-- **Dividende/Zinsen:** Ertrag netto = Betrag − Steuer − Gebühr.
+- **Dividende/Zinsen:** Ertrag netto = Betrag − Steuer − Gebühr. Beim PDF-Import ist der Betrag bereits die
+  Gutschrift aufs Konto (nach ausländischer Quellensteuer); die Quellensteuer steht nur in der Notiz.
 - **Ø-Kaufkurs** = Einstand / Bestand. **Ø nach Ausschüttungen** = (Einstand − Erträge netto) / Bestand.
 - **Gesamtergebnis** = Kursgewinn + realisiert + Erträge − separate Kosten (Gebühren, Steuern).
   Das Ergebnis ist unabhängig davon, ob Gebühren im Einstand stecken.
