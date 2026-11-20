@@ -23,7 +23,7 @@ ohne App Store. **Alle Daten bleiben auf dem Gerät**; es gibt keinen Server.
 
 ## Auf dem iPhone installieren
 
-1. **https://x4k-de.github.io/abakus/** in **Safari** öffnen.
+1. **https://x4k-de.github.io/Abakus/** in **Safari** öffnen.
 2. Unten auf **Teilen** tippen → **Zum Home-Bildschirm**.
 3. Abakus startet nun wie eine normale App (auch offline).
 
