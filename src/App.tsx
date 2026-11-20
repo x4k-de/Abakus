@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
+import { IconCrypto, IconDepot, IconImport, IconList, IconMore } from './components/icons';
 import { requestPersistence } from './lib/db';
 import { useAppData } from './lib/hooks';
 import { BookingsPage } from './pages/BookingsPage';
@@ -8,12 +9,12 @@ import { SettingsPage } from './pages/SettingsPage';
 
 type Tab = 'depot' | 'krypto' | 'buchungen' | 'import' | 'mehr';
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'depot', label: 'Depot', icon: '▤' },
-  { id: 'krypto', label: 'Krypto', icon: '₿' },
-  { id: 'buchungen', label: 'Buchungen', icon: '≡' },
-  { id: 'import', label: 'Import', icon: '⇪' },
-  { id: 'mehr', label: 'Mehr', icon: '⚙' },
+const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
+  { id: 'depot', label: 'Depot', icon: <IconDepot /> },
+  { id: 'krypto', label: 'Krypto', icon: <IconCrypto /> },
+  { id: 'buchungen', label: 'Buchungen', icon: <IconList /> },
+  { id: 'import', label: 'Import', icon: <IconImport /> },
+  { id: 'mehr', label: 'Mehr', icon: <IconMore /> },
 ];
 
 function initialTab(): Tab {
@@ -37,7 +38,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <img src="icon.svg" alt="" width={26} height={26} />
+          <img src="icon.svg" alt="" width={28} height={28} />
           <span>Abakus</span>
         </div>
         <nav className="toptabs">

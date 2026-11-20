@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookingEditor } from '../components/BookingEditor';
 import { PositionDetail } from '../components/PositionDetail';
+import { IconChevron, IconRefresh } from '../components/icons';
 import { Empty, Money, Pct, Stat } from '../components/ui';
 import { computeSummary, type Position } from '../lib/calc';
 import type { AppData } from '../lib/hooks';
@@ -33,7 +34,7 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
     try {
       const open = s.positions.map((p) => p.asset).filter((a) => !auto || a.priceSource !== 'manuell');
       const r = await updatePrices(kind, open);
-      setMsg(`${r.updated} Kurse aktualisiert${r.missing.length ? ` · ohne Kurs: ${r.missing.join(', ')}` : ''}`);
+      setMsg(auto && !r.updated ? '' : `${r.updated} Kurse aktualisiert`);
     } catch (e) {
       setMsg(auto ? 'Kurse konnten nicht automatisch geladen werden (offline?)' : (e as Error).message);
     } finally {
@@ -61,54 +62,69 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
     );
   }
 
+  const missing = s.positions.filter((p) => p.priceIsFallback).length;
   return (
     <div className="page">
       <section className="hero">
-        <div className="hero-label">{isCrypto ? 'Krypto-Bestand' : 'Depotwert'}</div>
-        <div className="hero-value">{fmtEur(s.marketValue)}</div>
-        <div className="hero-sub">
-          <Money value={s.unrealized} signed /> <Pct value={s.costBasis ? s.unrealized / s.costBasis : undefined} />
-          <span className="muted"> Kursgewinn</span>
+        <div className="hero-top">
+          <div className="hero-label">{isCrypto ? 'Krypto-Bestand' : 'Depotwert'}</div>
+          <button className={`round-btn${busy ? ' spin' : ''}`} onClick={() => refreshPrices()} disabled={busy} aria-label="Kurse aktualisieren" title="Kurse aktualisieren">
+            <IconRefresh />
+          </button>
         </div>
-        {s.missingPrices > 0 && <div className="hero-warn">{s.missingPrices} Position(en) ohne Kurs</div>}
+        <div className="hero-value num">{fmtEur(s.marketValue)}</div>
+        <div className="hero-glass">
+          <div>
+            <div className="hero-k">Kursgewinn</div>
+            <div className="hero-v">
+              <Money value={s.unrealized} signed /> <Pct value={s.costBasis ? s.unrealized / s.costBasis : undefined} />
+            </div>
+          </div>
+          <div className="right">
+            <div className="hero-k">Gesamtergebnis</div>
+            <div className="hero-v">
+              <Money value={s.total} signed />
+            </div>
+          </div>
+        </div>
       </section>
+      {(msg || missing > 0) && (
+        <p className="status-line">
+          {busy ? 'Kurse werden geladen …' : msg}
+          {missing > 0 && !busy && (
+            <span className="warn-text">
+              {msg ? ' · ' : ''}
+              {missing} ohne aktuellen Kurs
+            </span>
+          )}
+        </p>
+      )}
 
       <section className="stats">
-        <Stat label="Gesamtergebnis" hint={isCrypto ? 'inkl. Verkäufe, abzgl. Gebühren' : 'inkl. Erträge & Erstattung'}>
-          <Money value={s.total} signed />
-        </Stat>
         <Stat label="Einstand">
           <Money value={s.costBasis} />
         </Stat>
-        {!isCrypto && (
+        {!isCrypto ? (
           <Stat label="Dividenden & Zinsen">
             <Money value={s.incomeNet} />
+          </Stat>
+        ) : (
+          <Stat label="Gebühren">
+            <Money value={s.fees} />
           </Stat>
         )}
         <Stat label="Realisiert">
           <Money value={s.realized} signed />
         </Stat>
-        <Stat label="Gebühren">
-          <Money value={s.fees} />
-        </Stat>
         {!isCrypto && (
-          <Stat label="Erstattung" hint={`max. ${fmtEur(data.settings.erstattungMax)} je Jahr`}>
-            <Money value={s.refund} className="pos" />
+          <Stat label="Gebühren netto" hint={s.refund ? `nach ${fmtEur(s.refund)} Erstattung` : undefined}>
+            <Money value={s.fees - s.refund} />
           </Stat>
         )}
       </section>
 
-      {(
-        <div className="row">
-          <button className="btn" onClick={() => refreshPrices()} disabled={busy}>
-            {busy ? 'Lade Kurse …' : '↻ Kurse aktualisieren'}
-          </button>
-          {msg && <span className="muted small">{msg}</span>}
-        </div>
-      )}
-
       <h2 className="section-title">Positionen</h2>
-      <div className="cards">
+      <div className="list-panel">
         {s.positions.map((p) => (
           <PositionCard key={p.asset.id} p={p} onClick={() => setDetailId(p.asset.id)} />
         ))}
@@ -118,7 +134,7 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
       {!isCrypto && s.years.length > 0 && (
         <>
           <h2 className="section-title">Jahresübersicht</h2>
-          <div className="card table-wrap">
+          <div className="panel table-wrap">
             <table className="table">
               <thead>
                 <tr>
@@ -155,24 +171,28 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
       {s.closed.length > 0 && (
         <>
           <button className="section-title as-btn" onClick={() => setShowClosed(!showClosed)}>
-            Historie geschlossener Positionen ({s.closed.length}) {showClosed ? '▾' : '▸'}
+            Geschlossene Positionen <span className="count">{s.closed.length}</span>
+            <span className={`chev${showClosed ? ' open' : ''}`}>
+              <IconChevron />
+            </span>
           </button>
           {showClosed && (
-            <div className="cards">
+            <div className="list-panel">
               {s.closed.map((p) => {
                 const res = p.realized + p.incomeNet - p.extraCosts;
                 return (
-                  <button key={p.asset.id} className="pos-card closed" onClick={() => setDetailId(p.asset.id)}>
+                  <button key={p.asset.id} className="pos-row" onClick={() => setDetailId(p.asset.id)}>
                     <div className="pc-main">
                       <div className="pc-name">{p.asset.name}</div>
-                      <div className="muted small">
+                      <div className="pc-sub">
                         {p.firstDate && isoToDe(p.firstDate)} – {isoToDe(p.asset.closedAt ?? p.lastDate ?? '')} · {ASSET_TYP_LABEL[p.asset.typ]}
                       </div>
                     </div>
                     <div className="pc-right">
-                      <Money value={res} signed />
-                      <div className="muted small">{res >= 0 ? 'Gewinn' : 'Verlust'}</div>
-                      {p.missingBuys && <div className="tag warn">Käufe fehlen?</div>}
+                      <div className="pc-value">
+                        {p.missingBuys && <span className="dot warn" title="Käufe fehlen?" />}
+                        <Money value={res} signed />
+                      </div>
                     </div>
                   </button>
                 );
@@ -200,23 +220,23 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
 
 function PositionCard({ p, onClick }: { p: Position; onClick: () => void }) {
   const unit = p.asset.typ === 'anleihe' ? ' %' : ' €';
+  const flag = p.priceIsFallback ? 'Kein aktueller Kurs – letzter Kaufkurs verwendet' : p.missingBuys ? 'Käufe fehlen?' : '';
   return (
-    <button className="pos-card" onClick={onClick}>
+    <button className="pos-row" onClick={onClick}>
       <div className="pc-main">
         <div className="pc-name">{p.asset.name}</div>
-        <div className="muted small">
-          {fmtQty(p.quantity)} {p.asset.kind === 'krypto' ? p.asset.symbol : 'Stk.'} · Ø {fmtPrice(p.avgPrice, unit)}
-          {p.incomeNet > 0 && <> · nach Ausschüttung {fmtPrice(p.effAvgPrice, unit)}</>}
+        <div className="pc-sub">
+          {fmtQty(p.quantity)} {p.asset.kind === 'krypto' ? p.asset.symbol : 'Stk.'} · Ø {fmtPrice(p.incomeNet > 0 ? p.effAvgPrice : p.avgPrice, unit)}
         </div>
       </div>
       <div className="pc-right">
-        <div className="num strong">{fmtEur(p.marketValue)}</div>
-        <div className="row tight">
-          <Money value={p.unrealized} signed className="small" />
-          <Pct value={p.unrealizedPct} />
+        <div className="pc-value num">
+          {flag && <span className="dot warn" title={flag} />}
+          {fmtEur(p.marketValue)}
         </div>
-        {p.priceIsFallback && <div className="tag warn">Kurs fehlt</div>}
-        {p.missingBuys && <div className="tag warn">Käufe fehlen?</div>}
+        <div className="pc-delta">
+          <Money value={p.unrealized} signed /> <Pct value={p.unrealizedPct} />
+        </div>
       </div>
     </button>
   );

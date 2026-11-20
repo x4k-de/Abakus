@@ -18,7 +18,7 @@ export function Pct({ value: raw }: { value: number | undefined }) {
   const value = Math.abs(raw) < 0.0005 ? 0 : raw;
   const cls = value > 0.0004 ? 'pos' : value < -0.0004 ? 'neg' : '';
   return (
-    <span className={`pill ${cls}`}>
+    <span className={`pct ${cls}`}>
       {value > 0 ? '+' : ''}
       {fmtPct(value)}
     </span>
