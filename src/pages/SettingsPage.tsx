@@ -62,7 +62,7 @@ export function SettingsPage({ data }: { data: AppData }) {
                   <th>Jahr</th>
                   <th>Gebühren {s.erstattungKonto}</th>
                   <th>Erstattung</th>
-                  <th>Abweichend (€)</th>
+                  <th>Anpassen</th>
                 </tr>
               </thead>
               <tbody>

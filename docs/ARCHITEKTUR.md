@@ -13,12 +13,25 @@
 | Backup | `src/lib/backup.ts` |
 | Kurse | `src/lib/prices.ts` |
 | PDF-Text / Texterkennung | `src/lib/import/pdfText.ts`, `pdfLines.ts`, `scripts/copy-ocr.mjs` |
-| Oberfläche | `src/pages/*`, `src/components/*` |
+| Oberfläche | `src/pages/*`, `src/components/*` (Icons: `icons.tsx`) |
+| Design | `src/styles.css` (Farben und Schatten als Variablen in `:root`) |
 
 Es gibt keinen Server. Die App ist eine statische Webseite; Daten liegen in der IndexedDB des Browsers.
 Netzwerkzugriffe: nur für Kurse – CoinGecko für Krypto (es werden nur Coin-Namen übertragen) und onvista für
 Wertpapiere (es wird nur die ISIN übertragen, keine Stückzahlen oder Beträge). Beim Öffnen des Depots werden
 Kurse, die nicht von heute sind, automatisch nachgeladen; manuell eingetragene Kurse bleiben unangetastet.
+
+## Design
+
+Dunkles Grün-Thema (Palette #051F20 #0B2B26 #163832 #235347 #8EB69B #DAF1DE) nach zwei Vorlagen:
+
+- **Glas-Karte mit Leuchtkante** (`.hero`): oben dunkle Fläche mit feinen Höhenlinien, unten ein heller
+  Glasteil (`.hero-glass`), getrennt durch eine leuchtende Kante.
+- **Neumorphism-Bedienfeld**: Flächen (`.stats`, `.list-panel`, `.kv-panel`, `.card`) mit weichem Licht/Schatten
+  (`--neu`, `--neu-sm`), eingelassene Elemente (Eingaben, aktiver Reiter) mit `--inset`.
+- Ruhige Typografie: Beschriftungen klein und gedämpft, Werte groß und dünn; Hinweise als Punkt statt Etikett.
+
+Vorher-/Nachher-Bilder (mit erfundenen Demo-Daten) liegen in `docs/screenshots/`.
 
 ## Datenmodell
 

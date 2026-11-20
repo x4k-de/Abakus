@@ -3,6 +3,21 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.4.0] – 2026-11-20
+
+### Geändert
+- **Neues, ruhigeres Design** nach den Vorlagen (Glas-Karte mit Leuchtkante, dunkles Neumorphism-Bedienfeld,
+  Grün-Palette):
+  - Depotwert als Glas-Karte mit feinen Höhenlinien und leuchtendem Glasteil für Kursgewinn und Gesamtergebnis;
+    der Kurs-Knopf sitzt als runder Neumorphism-Knopf in der Karte.
+  - Kennzahlen in einer gemeinsamen Fläche mit Haarlinien statt vieler Einzelkacheln; „Gebühren netto“ (nach
+    Erstattung) statt zwei Werten nebeneinander.
+  - Positionen als ruhige Liste; Hinweise („kein aktueller Kurs“, „Käufe fehlen?“) nur noch als kleiner Punkt.
+  - Detailansicht: Glas-Karte oben, darunter eine schlichte Werteliste statt neun Kacheln.
+  - Buchungen einzeilig, ohne Etiketten „angepasst/manuell“; zu Prüfendes als Punkt.
+  - Schwebende Tab-Leiste mit Linien-Icons und eingelassenem, leuchtendem aktivem Reiter.
+  - Ruhigere Schrift: keine Großbuchstaben-Beschriftungen, dünnere große Zahlen, mehr Weißraum.
+- Das App-Icon bleibt unverändert.
 ## [0.3.1] – 2026-11-20
 
 ### Behoben

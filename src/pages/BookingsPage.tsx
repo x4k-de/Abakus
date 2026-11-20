@@ -48,13 +48,13 @@ export function BookingsPage({ data }: { data: AppData }) {
     <div className="page">
       <div className="row between">
         <h1>Buchungen</h1>
-        <button className="btn primary" onClick={() => setEdit({})}>
+        <button className="btn small" onClick={() => setEdit({})}>
           + Nachtragen
         </button>
       </div>
       <div className="filters">
         <input type="search" placeholder="Suchen (Name, WKN, ISIN, Konto …)" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="row wrap">
+        <div className="row filter-row">
           <div className="seg">
             {(['alle', 'wertpapier', 'krypto'] as const).map((k) => (
               <button key={k} className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>
@@ -97,18 +97,18 @@ export function BookingsPage({ data }: { data: AppData }) {
                   <div className="grow">
                     <div className="bt">
                       {a?.name ?? (b.type === 'gebuehr' || b.type === 'steuer' ? `${BOOKING_TYPE_LABEL[b.type]} ${b.konto}` : 'ohne Zuordnung')}
-                      {b.edited && <span className="tag">angepasst</span>}
-                      {b.source === 'manuell' && <span className="tag">manuell</span>}
-                      {b.hint && <span className="tag warn">prüfen</span>}
                     </div>
                     <div className="muted small">
                       {isoToDe(b.date)} · {BOOKING_TYPE_LABEL[b.type]}
-                      {b.type === 'transfer' ? ` ${b.konto} → ${b.zielKonto}` : ` · ${b.konto}`}
+                      {b.type === 'transfer' ? ` ${b.konto} → ${b.zielKonto}` : ''}
                       {b.quantity ? ` · ${fmtQty(b.quantity)}` : ''}
                       {b.price && b.type !== 'transfer' ? ` à ${fmtPrice(b.price, unit)}` : ''}
                     </div>
                   </div>
-                  {value != null && <Money value={value} signed />}
+                  <div className="b-right">
+                    {b.hint && <span className="dot warn" title="bitte prüfen" />}
+                    {value != null && <Money value={value} signed />}
+                  </div>
                 </li>
               );
             })}

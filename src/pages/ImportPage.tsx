@@ -3,6 +3,7 @@ import { buildPreview, commitPreview, parseFile, type PreviewRow } from '../lib/
 import type { FileParseResult } from '../lib/import/model';
 import { fmtEur, fmtQty, isoToDe } from '../lib/num';
 import { BOOKING_TYPE_LABEL } from '../lib/types';
+import { IconImport } from '../components/icons';
 
 export function ImportPage({ onDone }: { onDone: () => void }) {
   const input = useRef<HTMLInputElement>(null);
@@ -62,10 +63,12 @@ export function ImportPage({ onDone }: { onDone: () => void }) {
           void handleFiles(e.dataTransfer.files);
         }}
       >
-        <div className="dz-icon">⇪</div>
+        <div className="dz-icon">
+          <IconImport />
+        </div>
         <div className="strong">Dateien auswählen oder hierher ziehen</div>
-        <div className="muted small">HVB-Abrechnungen (PDF, beliebig viele) · BISON- und Trade-Republic-Umsätze (CSV)</div>
-        <div className="muted small">Die Dateien werden nur auf diesem Gerät gelesen und nirgendwohin hochgeladen.</div>
+        <div className="muted small">HVB-PDFs · BISON- und Trade-Republic-CSV</div>
+        <div className="muted small">Bleibt auf diesem Gerät – nichts wird hochgeladen.</div>
         <input
           ref={input}
           type="file"

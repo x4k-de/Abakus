@@ -4,7 +4,7 @@ import { sortBookings } from '../lib/calc';
 import { db } from '../lib/db';
 import { fmtEur, fmtPrice, fmtQty, isoToDe, parseDe, round, todayIso, uid } from '../lib/num';
 import { ASSET_TYP_LABEL, type AssetTyp, BOOKING_TYPE_LABEL, type Booking } from '../lib/types';
-import { Field, Money, Pct, Sheet, Stat } from './ui';
+import { Field, Money, Pct, Sheet } from './ui';
 
 interface Props {
   position: Position;
@@ -74,19 +74,29 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
 
   return (
     <Sheet title={a.name} onClose={onClose}>
-      <div className="detail-head">
-        <div className="muted small">
+      <section className="hero compact">
+        <div className="hero-label">
           {ASSET_TYP_LABEL[a.typ]}
-          {a.wkn && ` · WKN ${a.wkn}`}
-          {a.isin && ` · ${a.isin}`}
+          {a.wkn && ` · ${a.wkn}`}
           {a.symbol && a.kind === 'krypto' && ` · ${a.symbol}`}
-          {a.closedAt && ` · geschlossen am ${isoToDe(a.closedAt)}`}
+          {a.closedAt && ` · geschlossen ${isoToDe(a.closedAt)}`}
         </div>
-        <div className="detail-value">
-          <Money value={p.marketValue} />
-          <Pct value={p.unrealizedPct} />
+        <div className="hero-value num">{fmtEur(p.marketValue)}</div>
+        <div className="hero-glass">
+          <div>
+            <div className="hero-k">Kursgewinn</div>
+            <div className="hero-v">
+              <Money value={p.unrealized} signed /> <Pct value={p.unrealizedPct} />
+            </div>
+          </div>
+          <div className="right">
+            <div className="hero-k">Gesamtergebnis</div>
+            <div className="hero-v">
+              <Money value={p.totalReturn ?? p.realized + p.incomeNet - p.extraCosts} signed />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
       {p.missingBuys && (
         <p className="note warn">
@@ -95,31 +105,48 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
           dann stimmt der realisierte Gewinn.
         </p>
       )}
-      <div className="stats">
-        <Stat label="Bestand">{fmtQty(p.quantity)}</Stat>
-        <Stat label="Einstand">
+      <ul className="kv-panel">
+        <li>
+          <span>Bestand</span>
+          <span className="num">
+            {fmtQty(p.quantity)} {a.kind === 'krypto' ? a.symbol : 'Stk.'}
+          </span>
+        </li>
+        <li>
+          <span>Einstand</span>
           <Money value={p.costBasis} />
-        </Stat>
-        <Stat label="Ø-Kaufkurs">{fmtPrice(p.avgPrice, unit)}</Stat>
-        <Stat label="Ø nach Ausschüttungen" hint="Erträge senken den Preis">
-          {fmtPrice(p.effAvgPrice, unit)}
-        </Stat>
-        <Stat label="Kursgewinn">
-          <Money value={p.unrealized} signed />
-        </Stat>
-        <Stat label={a.kind === 'krypto' ? 'Realisiert' : 'Realisiert (Verkäufe)'}>
+        </li>
+        <li>
+          <span>Ø-Kaufkurs</span>
+          <span className="num">{fmtPrice(p.avgPrice, unit)}</span>
+        </li>
+        {p.incomeNet > 0 && (
+          <li>
+            <span>Ø nach Ausschüttungen</span>
+            <span className="num">{fmtPrice(p.effAvgPrice, unit)}</span>
+          </li>
+        )}
+        <li>
+          <span>Realisiert</span>
           <Money value={p.realized} signed />
-        </Stat>
-        <Stat label="Erträge netto">
-          <Money value={p.incomeNet} />
-        </Stat>
-        <Stat label="Gebühren">
+        </li>
+        {a.kind !== 'krypto' && (
+          <li>
+            <span>Erträge netto</span>
+            <Money value={p.incomeNet} />
+          </li>
+        )}
+        <li>
+          <span>Gebühren</span>
           <Money value={p.fees} />
-        </Stat>
-        <Stat label="Gesamtergebnis" hint="Kurs + realisiert + Erträge − Kosten">
-          <Money value={p.totalReturn ?? p.realized + p.incomeNet - p.extraCosts} signed />
-        </Stat>
-      </div>
+        </li>
+        {a.isin && (
+          <li>
+            <span>ISIN</span>
+            <span className="num muted">{a.isin}</span>
+          </li>
+        )}
+      </ul>
 
       {a.kind === 'krypto' && (
         <div className="card flat">
@@ -173,9 +200,7 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
                 <div className="bt">
                   {BOOKING_TYPE_LABEL[b.type]}
                   {b.type === 'transfer' && ` ${b.konto} → ${b.zielKonto}`}
-                  {b.edited && <span className="tag">angepasst</span>}
-                  {b.source === 'manuell' && <span className="tag">manuell</span>}
-                  {b.hint && <span className="tag warn">prüfen</span>}
+                  {b.hint && <span className="dot warn" title="bitte prüfen" />}
                 </div>
                 <div className="muted small">
                   {isoToDe(b.date)} · {fmtQty(b.quantity)} {b.price ? `à ${fmtPrice(b.price, unit)}` : ''} {b.fee ? `· Gebühr ${fmtPrice(b.fee)}` : ''}
