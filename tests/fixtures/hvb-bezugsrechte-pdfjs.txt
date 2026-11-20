@@ -1,0 +1,23 @@
+UniCredit Bank AG
+Bezugsrechte Kauf
+- Gesch{ftsbest{tigung vor steuerlicher Behandlung -
+Depotnummer   Abrechnungstag   Blatt
+123   45678901   10.02.2017   1
+Depotart   Filiale
+Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+MUSTER S.P.A.   E1F2G3
+ST 5
+ANRECHTE   IT0000000015
+Zum Kurs von   Ausf}hrungstag/Zeit   Ausf}hrungsort   Verwahrart
+10.02.2017
+EUR 10,00   HAMBURG   Bezugsrechte
+13.05.00
+Abrechnung
+Kurswert   EUR   50,00
+Maklercourtage*   EUR   0,75
+Provision   EUR   5,00
+-----------------------
+Belastung (vor Steuern)   EUR   55,75
+Valuta 14.02.2017   -----------------------
+Umsatzreferenz: 20170210WAB0000000015
+Diese Abrechnung erfolgt ohne Ber}cksichtigung der Kapitalertragsteuer.

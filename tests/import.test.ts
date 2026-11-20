@@ -147,6 +147,15 @@ describe('HVB-Abrechnungen', () => {
     expect(looksGarbled('Wertpapier-Abrechnung Kauf')).toBe(false);
   });
 
+  it('erkennt Bezugsrechte-Käufe (alter Zeichensatz, Courtage + Provision als Gebühr)', () => {
+    const r = parsePdfText(fx('hvb-bezugsrechte-pdfjs.txt'), 'br.PDF');
+    expect(r.error).toBeUndefined();
+    const [x] = r.records;
+    expect(x.warnings).toEqual([]);
+    expect(x.asset).toMatchObject({ wkn: 'E1F2G3', isin: 'IT0000000015' });
+    expect(x.booking).toMatchObject({ type: 'kauf', date: '2017-02-10', quantity: 5, price: 10, amount: 50, fee: 5.75 });
+  });
+
   it('lehnt fremde PDFs ab', () => {
     expect(parsePdfText('Irgendein Brief', 'x.pdf').error).toBeTruthy();
   });
