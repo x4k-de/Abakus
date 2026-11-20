@@ -15,8 +15,11 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
   Von Hand bearbeitete Buchungen bleiben unverändert. Das Gesamtergebnis ändert sich dadurch nicht.
 
 ### Behoben
-- Kauf/Verkauf in Fremdwährung ohne Devisenkurs im Beleg: Der EUR-Betrag wird aus Belastung bzw.
-  Gutschrift und Provision abgeleitet statt 0,00 € anzuzeigen.
+- Einige Verkaufsabrechnungen wurden mit „Belegart noch nicht unterstützt“ abgelehnt, weil der PDF-Leser
+  den gesperrten Titel in zwei Stücke teilt („Verk auf“). Wird jetzt erkannt.
+- USD-Verkäufe zeigten 0,00 €: Der Beleg nennt den „Umrechnungskurs 1 EUR = … USD“ statt „Devisenkurs“.
+  Wird jetzt gelesen; ausgewiesene Devisenkosten zählen als Gebühr. Fehlt jeder Kurs, wird der EUR-Betrag
+  aus Belastung bzw. Gutschrift und Provision abgeleitet. Kein Prüfhinweis mehr bei Umrechnungen.
 
 ## [0.1.1] – 2026-11-20
 

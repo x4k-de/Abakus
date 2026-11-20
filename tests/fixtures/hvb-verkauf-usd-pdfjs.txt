@@ -1,0 +1,23 @@
+Wertpapier-Abrechnung Verk auf
+- Geschäftsbestätigung vor steuerlicher Behandlung -   Kommission außerbörslich
+Depotnummer   Abrechnungstag   Blatt
+123   45678901   14.01.2026   1
+Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+MUSTER FUNDS-ASIA EQUITY PORTFOL.   P4Q5R6
+ST 20
+REG. SHARES BASE DIS. USD O.N   LU0000000010
+Zum Kurs von   Ausführungstag/Zeit   Ausführungsort   Verwahrart
+13.01.2026
+USD 60,00   WP-Rechnung GS
+21.55.08
+Abrechnung
+Kurswert   USD   1.200,00
+Zwischensumme   EUR   960,00
+-----------------------
+Gutschrift (vor Steuern)   EUR   960,00
+Valuta 16.01.2026   -----------------------
+Umrechnungskurs   1 EUR = 1,2500 USD
+Referenzkurs   1 EUR = 1,2448 USD
+Devisenkosten   -4,00 EUR
+Umsatzreferenz: 20260113WAB0000000010
+Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380.

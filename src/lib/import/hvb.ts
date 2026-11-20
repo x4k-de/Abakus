@@ -36,7 +36,12 @@ function guessTyp(name: string, nominal: boolean): AssetTyp {
  * zwischen jedem Zeichen.
  */
 export function normalizeHvbText(text: string): string {
-  return text.replace(/(?:^|(?<=\s))((?:\S ){3,}\S)(?=\s|$)/gm, (m) => m.replace(/ /g, ''));
+  return (
+    text
+      .replace(/(?:^|(?<=\s))((?:\S ){3,}\S)(?=\s|$)/gm, (m) => m.replace(/ /g, ''))
+      // Je nach PDF zerfällt das gesperrte Wort in zwei Textstücke („Verk auf“, „Ka uf“)
+      .replace(/(Abrechnung\s*)(V\s?e\s?r\s?k\s?a\s?u\s?f|K\s?a\s?u\s?f)(?![a-zäöü])/g, (_, a: string, w: string) => a + w.replace(/\s/g, ''))
+  );
 }
 
 /** Ist das überhaupt ein HVB-Wertpapierbeleg? */
@@ -124,7 +129,11 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   const kurswertEur = parseDe(match(text, new RegExp(`Kurswert\\s+EUR\\s+${NUM}`)));
   const total = parseDe(match(text, new RegExp(`(?:Belastung|Gutschrift)\\s*(?:\\(vor\\s+Steuern\\))?\\s+EUR\\s+${NUM}`)));
   const provision = parseDe(match(text, new RegExp(`provision\\*?\\s+EUR\\s+${NUM}`, 'i')));
-  const fxRate = parseDe(match(text, new RegExp(`Devisenkurs[^\\d\\n]*${NUM}`)));
+  const fxRate = parseDe(
+    match(text, new RegExp(`Devisenkurs[^\\d\\n]*${NUM}`)) ?? match(text, new RegExp(`Umrechnungskurs\\s+1\\s+EUR\\s*=\\s*${NUM}`)),
+  );
+  // Devisenkosten (Aufschlag auf den Umrechnungskurs) sind Kosten wie die Provision
+  const devKosten = Math.abs(parseDe(match(text, new RegExp(`Devisenkosten\\s+-?${NUM}\\s*EUR`))));
   const kurswertFx = currency ? parseDe(match(text, new RegExp(`Kurswert\\s+${currency}\\s+${NUM}`))) : NaN;
 
   // Kurswert in EUR: direkt aus dem Beleg, sonst über den Devisenkurs umrechnen
@@ -134,7 +143,6 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
     const fxValue = Number.isFinite(kurswertFx) ? kurswertFx : priceRaw * quantity;
     if (Number.isFinite(fxRate) && fxRate > 0) {
       kurswert = round(fxValue / fxRate);
-      warnings.push(`Kurswert aus ${currency} mit Devisenkurs ${fxRate} umgerechnet – bitte prüfen`);
     } else if (Number.isFinite(total)) {
       // Kein Devisenkurs im Beleg: EUR-Betrag aus Belastung/Gutschrift und Provision ableiten
       const prov = Number.isFinite(provision) ? provision : 0;
@@ -143,6 +151,11 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
     } else {
       warnings.push(`Abrechnung in ${currency}: Devisenkurs nicht gefunden – bitte EUR-Betrag prüfen`);
     }
+  }
+
+  // Kurswert vor Devisenkosten, damit diese als Gebühr zählen (Gutschrift bzw. Belastung bleibt gleich)
+  if (Number.isFinite(devKosten) && devKosten > 0 && Number.isFinite(kurswert) && !Number.isFinite(kurswertEur)) {
+    kurswert = round(side === 'kauf' ? kurswert - devKosten : kurswert + devKosten);
   }
 
   let fee = 0;

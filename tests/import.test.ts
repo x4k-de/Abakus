@@ -88,6 +88,15 @@ describe('HVB-Abrechnungen', () => {
     expect(r.booking.price).toBeCloseTo(50, 6);
   });
 
+  it('liest USD-Verkäufe mit Umrechnungskurs und Devisenkosten (Titel in zwei Stücken)', () => {
+    const r = parsePdfText(fx('hvb-verkauf-usd-pdfjs.txt'), 'v.PDF');
+    expect(r.error).toBeUndefined();
+    const [x] = r.records;
+    expect(x.warnings).toEqual([]);
+    expect(x.asset).toMatchObject({ wkn: 'P4Q5R6', isin: 'LU0000000010' });
+    expect(x.booking).toMatchObject({ type: 'verkauf', date: '2026-01-13', quantity: 20, currency: 'USD', priceOriginal: 60, fxRate: 1.25, amount: 964, fee: 4 });
+  });
+
   it('lehnt fremde PDFs ab', () => {
     expect(parsePdfText('Irgendein Brief', 'x.pdf').error).toBeTruthy();
   });
