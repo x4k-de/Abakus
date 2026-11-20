@@ -1,0 +1,12 @@
+node_modules
+dist
+*.local
+.DS_Store
+# Niemals echte Bank-/Depotdaten einchecken
+*.pdf
+*.PDF
+*.numbers
+*.xlsx
+private/
+abakus-backup-*.json
+*.tsbuildinfo

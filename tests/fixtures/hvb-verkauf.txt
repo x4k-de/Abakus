@@ -1,0 +1,19 @@
+   Wertpapi er-Abrechnung Verkauf
+   - Geschäftsbestätigung vor steuerlicher Behandlung -   Kommission außerbörslich
+   Depotnummer   Abrechnungstag   Blatt
+   123   45678901   13.01.2026   1
+   HVB MitarbeiterBank.
+   Max Mustermann   Ordernummer   Abrechnungsnr.   Urspr. Abrechnungsnr.
+   Musterweg 1   9-WPV- 3333333   4444444
+   Nennbetrag   Wertpapierbezeichnung   Wertpapierkennnummer/ISIN
+   ST 2,475   MUSTER-GLOB.MEGATREND SELECT.   B2C3D4
+   NAMENS-ANTEILE P DY EUR O.N.   LU0000000002
+   Zum Kurs von   Ausführungstag/Zeit   Ausführungsort   Verwahrart
+   EUR 388,09   13.01.2026   WP-Rechnung GS
+   Abrechnung
+   Kurswert   EUR   960,52
+   -----------------------
+   Gutschrift (vor Steuern)   EUR   960,52
+   Valuta 15.01.2026   -----------------------
+   Umsatzreferenz: 20260113WAB0000000002
+   Kontrahent ist die UniCredit Bank GmbH oder ein Konzernunternehmen.

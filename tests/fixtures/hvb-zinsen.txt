@@ -1,0 +1,12 @@
+   Wertpapiermitteilung
+   Wertpapiermitteilung - Zinszahlung für Depotnummer 0123 0045678901
+   Emittentenland   Großbritannien
+   2,752% MUSTERBANK PLC   Wertpapierkennnummer   D4E5F6 / DE0000000004
+   EO-FLR MTN 23(28)   28.MJSD   Zinsen per   29.06.2026
+   Zahlweise vierteljährlich
+   Nennwert   EUR 2.000,000
+   zahlbar mit   0,688 %   Bruttobetrag   EUR   13,76
+   -------------------------------------------
+   Valuta 29.06.2026   Gutschrift   EUR   13,76
+   Referenz 20260625KUP0000000004
+   Unsere Umsatzsteuer-Identifikationsnummer: DE 129 273 380
