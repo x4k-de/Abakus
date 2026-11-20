@@ -12,6 +12,7 @@
 | Import-Ablauf / Duplikate | `src/lib/import/importService.ts` |
 | Backup | `src/lib/backup.ts` |
 | Kurse | `src/lib/prices.ts` |
+| PDF-Text / Texterkennung | `src/lib/import/pdfText.ts`, `pdfLines.ts`, `scripts/copy-ocr.mjs` |
 | Oberfläche | `src/pages/*`, `src/components/*` |
 
 Es gibt keinen Server. Die App ist eine statische Webseite; Daten liegen in der IndexedDB des Browsers.
@@ -52,3 +53,10 @@ Kurse, die nicht von heute sind, automatisch nachgeladen; manuell eingetragene K
 - Wertpapierkurse: onvista-Suche per ISIN, dann bester EUR-Kurs (Xetra, Tradegate, … ). Fonds ohne
   Börsenkurs bzw. ohne EUR-Notiz bleiben ohne Kurs und können manuell gepflegt werden.
 - Trade-Republic-Wertpapiere werden beim Import noch übersprungen.
+
+## Texterkennung (OCR) für alte PDFs
+
+Ältere HVB-PDFs nutzen Type-3-Schriften ohne Unicode-Zuordnung; pdf.js liefert dann nur Steuerzeichen.
+`looksGarbled()` erkennt das, worauf die erste Seite mit Faktor 4 (~300 dpi) gerendert und mit tesseract.js
+(Deutsch) gelesen wird. Worker, Engine und Sprachdaten kopiert `scripts/copy-ocr.mjs` vor `dev`/`build` nach
+`public/ocr` (nicht im Repo, nicht im Offline-Cache). `checkOcrRecord()` prüft die gelesenen Werte.

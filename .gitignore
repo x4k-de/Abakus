@@ -10,3 +10,4 @@ dist
 private/
 abakus-backup-*.json
 *.tsbuildinfo
+public/ocr/

@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseHvbText } from '../src/lib/import/hvb';
-import { itemsToLines } from '../src/lib/import/pdfLines';
-import { parseCsvText, parsePdfText } from '../src/lib/import/importService';
+import { itemsToLines, looksGarbled } from '../src/lib/import/pdfLines';
+import { checkOcrRecord, isValidIsin, parseCsvText, parsePdfText } from '../src/lib/import/importService';
 import { migrateIncomeToNet } from '../src/lib/db';
 import type { Booking } from '../src/lib/types';
 
@@ -111,6 +111,40 @@ describe('HVB-Abrechnungen', () => {
     expect(x.warnings).toEqual([]);
     expect(x.asset).toMatchObject({ wkn: 'V1W2X3', isin: 'ES0000000012' });
     expect(x.booking).toMatchObject({ type: 'kauf', date: '2022-06-23', quantity: 10.5, amount: 0, fee: 2.5 });
+  });
+
+  it('erkennt Einlösungen (Rückzahlung) als Verkauf', () => {
+    const r = parsePdfText(fx('hvb-einloesung-pdfjs.txt'), 'e.PDF');
+    expect(r.error).toBeUndefined();
+    expect(r.records[0].booking).toMatchObject({ type: 'verkauf', date: '2021-06-10', quantity: 1, price: 1000, amount: 1000, fee: 0 });
+  });
+
+  it('liest per Texterkennung gelesene alte Belege (mit Lesefehlern)', () => {
+    const r = parsePdfText(fx('hvb-kauf-ocr.txt'), 'alt.PDF', { ocr: true });
+    expect(r.error).toBeUndefined();
+    const [x] = r.records;
+    expect(x.warnings).toEqual([]);
+    expect(x.asset).toMatchObject({ isin: 'FR0000120271', name: 'MUSTER EQULTS FUND ACT. NOM. P EUR DIS. ON' });
+    expect(x.booking).toMatchObject({ type: 'kauf', date: '2021-03-08', quantity: 0.5, price: 100, amount: 50, fee: 1.1 });
+    expect(x.booking.note).toContain('Texterkennung');
+  });
+
+  it('Texterkennung: unstimmige Werte werden zum Prüfen markiert, deutsche WKN aus der ISIN', () => {
+    expect(isValidIsin('DE0005140008')).toBe(true);
+    expect(isValidIsin('DE0005140009')).toBe(false);
+    const r = {
+      asset: { kind: 'wertpapier' as const, typ: 'aktie' as const, name: 'X', isin: 'DE0005140008', wkn: '5I4OOO' },
+      booking: { type: 'kauf' as const, date: '2021-01-01', konto: 'HVB', quantity: 2, price: 10, amount: 25, fee: 0, tax: 0, source: 'pdf' as const },
+      warnings: [] as string[],
+    };
+    checkOcrRecord(r);
+    expect(r.asset.wkn).toBe('514000');
+    expect(r.warnings[0]).toContain('Stück × Kurs');
+  });
+
+  it('erkennt unlesbaren PDF-Text', () => {
+    expect(looksGarbled('\u0001\u0002\u0003 '.repeat(40))).toBe(true);
+    expect(looksGarbled('Wertpapier-Abrechnung Kauf')).toBe(false);
   });
 
   it('lehnt fremde PDFs ab', () => {

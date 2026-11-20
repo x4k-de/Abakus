@@ -47,7 +47,7 @@ export function normalizeHvbText(text: string): string {
 /** Ist das überhaupt ein HVB-Wertpapierbeleg? */
 export function isHvbDocument(rawText: string): boolean {
   const text = normalizeHvbText(rawText);
-  if (!/Wertpapi\s*er\s*-\s*Abrechnung|Wertpapiermitteilung/i.test(text)) return false;
+  if (!/Wertpapi\s*er\s*-\s*(?:Abrechnung|Einlösung)|Wertpapiermitteilung/i.test(text)) return false;
   // Bank-Merkmale; ältere Mitteilungen (bis 2025) nennen die Bank nur über die Bankleitzahl
   if (/HVB|UniCredit|HypoVereinsbank|DE\s*129\s*273\s*380/i.test(text)) return true;
   if (/\b700\s*(?:202\s*70|251\s*75)\b/.test(text)) return true;
@@ -59,11 +59,11 @@ export function parseHvbText(rawText: string, fileName = ''): ParsedRecord[] {
   const text = normalizeHvbText(rawText);
   // Mehrere Belege in einem PDF? An den Überschriften trennen.
   const parts = text
-    .split(/(?=Wertpapi\s*er\s*-\s*Abrechnung\s*(?:Kauf|Verkauf)|Wertpapiermitteilung\s*-\s*\S)/i)
-    .filter((p) => /Wertpapi\s*er\s*-\s*Abrechnung\s*(?:Kauf|Verkauf)|Wertpapiermitteilung\s*-\s*\S/i.test(p));
+    .split(/(?=Wertpapi\s*er\s*-\s*(?:Abrechnung\s*(?:Kauf|Verkauf|Bezug)|Einlösung)|Wertpapiermitteilung\s*-\s*\S)/i)
+    .filter((p) => /Wertpapi\s*er\s*-\s*(?:Abrechnung\s*(?:Kauf|Verkauf|Bezug)|Einlösung)|Wertpapiermitteilung\s*-\s*\S/i.test(p));
   const records: ParsedRecord[] = [];
   for (const part of parts) {
-    const r = /Wertpapi\s*er\s*-\s*Abrechnung/i.test(part) ? parseTrade(part, fileName) : parseIncome(part, fileName);
+    const r = /Wertpapi\s*er\s*-\s*(?:Abrechnung|Einlösung)/i.test(part) ? parseTrade(part, fileName) : parseIncome(part, fileName);
     if (r) records.push(r);
   }
   return records;
@@ -71,7 +71,9 @@ export function parseHvbText(rawText: string, fileName = ''): ParsedRecord[] {
 
 function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   const warnings: string[] = [];
-  const side = /Abrechnung\s*Verkauf/i.test(text) ? 'verkauf' : 'kauf';
+  // Einlösung (Rückzahlung, z. B. Zertifikat oder Anleihe bei Fälligkeit) wird wie ein Verkauf gebucht
+  const isEinloesung = /Wertpapi\s*er\s*-\s*Einlösung/i.test(text);
+  const side = isEinloesung || /Abrechnung\s*Verkauf/i.test(text) ? 'verkauf' : 'kauf';
 
   // Die Zeilenlage unterscheidet sich je nach PDF-Leser (Druckansicht vs. pdf.js). Deshalb wird
   // abschnittsweise gesucht statt zeilengenau:
@@ -99,7 +101,7 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
   const qtyPrefix = /^\s*(?:ST|STK|EUR)\s+[\d.,]+\s*/;
   const posLines = posSection
     .split('\n')
-    .map((l) => l.replace(qtyPrefix, '').trim())
+    .map((l) => l.replace(qtyPrefix, '').replace(/^[^A-Za-z0-9ÄÖÜäöü]+/, '').trim())
     .filter(Boolean);
   let name = '';
   let wkn: string | undefined;
@@ -133,9 +135,9 @@ function parseTrade(text: string, fileName: string): ParsedRecord | undefined {
     warnings.push('Ausführungstag nicht gefunden, Abrechnungstag verwendet');
   }
 
-  const kurswertEur = parseDe(match(text, new RegExp(`Kurswert\\s+EUR\\s+${NUM}`)));
+  const kurswertEur = parseDe(match(text, new RegExp(`Kurswert[^\\d\\nA-Z]{0,4}(?:[Il|]\\s+)?EUR\\s+${NUM}`)));
   const total = parseDe(match(text, new RegExp(`(?:Belastung|Gutschrift)\\s*(?:\\(vor\\s+Steuern\\))?\\s+EUR\\s+${NUM}`)));
-  const provision = parseDe(match(text, new RegExp(`provision\\*?\\s+EUR\\s+${NUM}`, 'i')));
+  const provision = parseDe(match(text, new RegExp(`provision[^\\d\\nA-Za-z]{0,4}\\s*EUR\\s+${NUM}`, 'i')));
   const fxRate = parseDe(
     match(text, new RegExp(`Devisenkurs[^\\d\\n]*${NUM}`)) ?? match(text, new RegExp(`Umrechnungskurs\\s+1\\s+EUR\\s*=\\s*${NUM}`)),
   );
