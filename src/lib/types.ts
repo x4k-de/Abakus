@@ -72,6 +72,12 @@ export interface Booking {
   reference?: string;
   /** true, sobald die Buchung von Hand geändert wurde */
   edited?: boolean;
+  /**
+   * Fondsverschmelzung: Die Auslieferung beim alten Fonds verweist auf den neuen (toAssetId), die Einlieferung
+   * beim neuen auf den alten (fromAssetId). Einstand und Erträge gehen dann vom alten auf den neuen Fonds über.
+   */
+  toAssetId?: string;
+  fromAssetId?: string;
   /** Hinweis aus dem Import, z. B. "bitte prüfen" */
   hint?: string;
   createdAt: string;
@@ -123,4 +129,10 @@ export const ASSET_TYP_LABEL: Record<AssetTyp, string> = {
 /** Kursfaktor: Anleihen werden in Prozent vom Nennwert notiert. */
 export function priceFactor(asset: Pick<Asset, 'typ'> | undefined): number {
   return asset?.typ === 'anleihe' ? 0.01 : 1;
+}
+
+/** Anzeigename einer Buchung (Fondsverschmelzung statt Ein-/Auslieferung) */
+export function bookingLabel(b: Pick<Booking, 'type' | 'fromAssetId' | 'toAssetId'>): string {
+  if (b.fromAssetId || b.toAssetId) return 'Fondsverschmelzung';
+  return BOOKING_TYPE_LABEL[b.type];
 }

@@ -206,6 +206,7 @@ export function PortfolioPage({ data, kind, onGoImport }: Props) {
         <PositionDetail
           position={detail}
           bookings={data.bookings.filter((b) => b.assetId === detail.asset.id)}
+          assets={data.assets}
           onClose={() => setDetailId(undefined)}
           onEditBooking={(b) => setEdit({ booking: b })}
           onAddBooking={(assetId) => setEdit({ assetId })}
@@ -226,7 +227,7 @@ function PositionCard({ p, onClick }: { p: Position; onClick: () => void }) {
       <div className="pc-main">
         <div className="pc-name">{p.asset.name}</div>
         <div className="pc-sub">
-          {fmtQty(p.quantity)} {p.asset.kind === 'krypto' ? p.asset.symbol : 'Stk.'} · Ø {fmtPrice(p.incomeNet > 0 ? p.effAvgPrice : p.avgPrice, unit)}
+          {fmtQty(p.quantity)} {p.asset.kind === 'krypto' ? p.asset.symbol : 'Stk.'} · Ø {fmtPrice(p.incomeNet + p.carriedIncome > 0 ? p.effAvgPrice : p.avgPrice, unit)}
         </div>
       </div>
       <div className="pc-right">

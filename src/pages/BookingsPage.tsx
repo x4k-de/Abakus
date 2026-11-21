@@ -4,7 +4,7 @@ import { Empty, Money } from '../components/ui';
 import { sortBookings } from '../lib/calc';
 import type { AppData } from '../lib/hooks';
 import { fmtPrice, fmtQty, isoToDe } from '../lib/num';
-import { type AssetKind, BOOKING_TYPE_LABEL, type Booking, type BookingType } from '../lib/types';
+import { type AssetKind, BOOKING_TYPE_LABEL, type Booking, type BookingType, bookingLabel } from '../lib/types';
 
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
@@ -99,7 +99,7 @@ export function BookingsPage({ data }: { data: AppData }) {
                       {a?.name ?? (b.type === 'gebuehr' || b.type === 'steuer' ? `${BOOKING_TYPE_LABEL[b.type]} ${b.konto}` : 'ohne Zuordnung')}
                     </div>
                     <div className="muted small">
-                      {isoToDe(b.date)} · {BOOKING_TYPE_LABEL[b.type]}
+                      {isoToDe(b.date)} · {bookingLabel(b)}
                       {b.type === 'transfer' ? ` ${b.konto} → ${b.zielKonto}` : ''}
                       {b.quantity ? ` · ${fmtQty(b.quantity)}` : ''}
                       {b.price && b.type !== 'transfer' ? ` à ${fmtPrice(b.price, unit)}` : ''}

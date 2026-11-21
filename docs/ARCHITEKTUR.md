@@ -53,6 +53,13 @@ Vorher-/Nachher-Bilder (mit erfundenen Demo-Daten) liegen in `docs/screenshots/`
 - **Ø-Kaufkurs** = Einstand / Bestand. **Ø nach Ausschüttungen** = (Einstand − Erträge netto) / Bestand.
 - **Verkauf ohne erfassten Kauf:** Nur der gedeckte Anteil zählt als realisierter Gewinn; der Erlös der
   übrigen Stücke wird separat ausgewiesen (Hinweis „Käufe fehlen?“). Der Bestand wird nie negativ.
+- **Fondsverschmelzung** (`src/lib/merge.ts`): Auslieferung des gesamten Bestands beim alten Fonds mit
+  `toAssetId`, Einlieferung der neuen Stücke beim neuen Fonds mit `fromAssetId`. Die Berechnung
+  (`computePositions`) rechnet zuerst den alten Fonds; dessen abgehender Einstand wird Einstand des neuen
+  (unabhängig vom Betrag der Einlieferung, damit die Einstellung „Gebühren im Einstand“ stimmt). Kein realisierter
+  Gewinn. Die Erträge des alten Fonds senken beim neuen weiter den Ø-Preis nach Ausschüttungen
+  (`carriedIncome`), zählen im Gesamtergebnis aber nur einmal. Bis ein Kurs vorliegt, gilt der übernommene
+  Einstand je Stück als Kurs.
 - **Gesamtergebnis** = Kursgewinn + realisiert + Erträge − separate Kosten (Gebühren, Steuern).
   Das Ergebnis ist unabhängig davon, ob Gebühren im Einstand stecken.
 - **Anleihen:** Menge = Nennwert, Kurs in Prozent (Faktor 0,01).
