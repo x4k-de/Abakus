@@ -23,13 +23,16 @@ Kurse, die nicht von heute sind, automatisch nachgeladen; manuell eingetragene K
 
 ## Design
 
-Dunkles Grün-Thema (Palette #051F20 #0B2B26 #163832 #235347 #8EB69B #DAF1DE) nach zwei Vorlagen:
+Nach Martins Vorlagen (Glas-Karte mit Leuchtkante, Neumorphism-Bedienfeld):
 
-- **Glas-Karte mit Leuchtkante** (`.hero`): oben dunkle Fläche mit feinen Höhenlinien, unten ein heller
-  Glasteil (`.hero-glass`), getrennt durch eine leuchtende Kante.
-- **Neumorphism-Bedienfeld**: Flächen (`.stats`, `.list-panel`, `.kv-panel`, `.card`) mit weichem Licht/Schatten
-  (`--neu`, `--neu-sm`), eingelassene Elemente (Eingaben, aktiver Reiter) mit `--inset`.
-- Ruhige Typografie: Beschriftungen klein und gedämpft, Werte groß und dünn; Hinweise als Punkt statt Etikett.
+- **Farben:** Hintergrund und Kartenflächen in dunklen Grautönen; Grün (#8EB69B #DAF1DE, Glow #7FF5BD) nur für
+  Leuchteffekte und Schrift.
+- **3D-Karten** (`--card3d` in `:root`): helle Lichtkante oben/links, dunkle Unterkante, zwei Stufen
+  Kartendicke und ein tiefer, weicher Schatten. Gilt für `.hero`, `.stats`, `.list-panel`, `.kv-panel`, `.card`
+  und die Tab-Leiste.
+- **Glas-Karte** (`.hero`): oben graue Fläche mit feinen Höhenlinien, unten ein leuchtender Glasteil
+  (`.hero-glass`) mit grüner Leuchtkante; darunter ein grüner Lichtschein. Der Depotwert ist groß und kräftig.
+- Eingelassene Elemente (Eingaben, aktiver Reiter) mit `--inset`. Hinweise als Punkt statt Etikett.
 
 Vorher-/Nachher-Bilder (mit erfundenen Demo-Daten) liegen in `docs/screenshots/`.
 
