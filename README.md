@@ -22,6 +22,9 @@ ohne App Store. **Alle Daten bleiben auf dem Gerät**; es gibt keinen Server.
   werden veraltete Kurse nachgeladen; übertragen wird nur die ISIN bzw. das Coin-Kürzel.
 - **Jede Buchung ist bearbeitbar**, fehlende Buchungen lassen sich von Hand nachtragen.
 - **Positionen schließen** – geschlossene Fonds bleiben mit Gewinn/Verlust in der Historie.
+- **Fondsverschmelzung** – ändert sich die WKN/ISIN, weil ein Fonds in einen anderen aufgeht: In der
+  Detailansicht „Fondsverschmelzung …“ wählen, neuen Fonds und neue Stückzahl eingeben. Einstand und bisherige
+  Erträge gehen ohne Gewinn/Verlust auf den neuen Fonds über, der alte bleibt verknüpft in der Historie.
 - **Backup** als Datei exportieren/einspielen (z. B. in iCloud Drive).
 
 ## Auf dem iPhone installieren

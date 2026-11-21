@@ -3,6 +3,14 @@
 Alle Änderungen an Abakus werden hier dokumentiert (neueste oben).
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.6.0] – 2026-11-21
+
+### Neu
+- **Fondsverschmelzung:** In der Detailansicht eines Wertpapiers gibt es „Fondsverschmelzung …“. Neuen Fonds
+  wählen oder anlegen (Name, ISIN, WKN), Datum und neue Stückzahl eingeben. Der gesamte Einstand und die
+  bisherigen Erträge gehen auf den neuen Fonds über, der alte wird ohne Gewinn oder Verlust geschlossen
+  (steuerneutral) und bleibt verknüpft in der Historie. Die Buchungen erscheinen als „Fondsverschmelzung“.
+
 ## [0.5.0] – 2026-11-20
 
 ### Geändert

@@ -5,6 +5,8 @@
 //  - Verkauf:   Einstand -(Ø-Einstand × Menge), realisierter Gewinn = Erlös − Gebühren − anteiliger Einstand
 //  - Dividende: Ertrag +(Betrag − Steuer − Gebühren); senkt den "effektiven Ø-Preis"
 //  - Transfer:  ändert nur, auf welchem Konto der Bestand liegt
+//  - Fondsverschmelzung: Auslieferung beim alten Fonds (ohne Gewinn/Verlust), Einlieferung beim neuen Fonds
+//    mit dem Einstand des alten; dessen Erträge senken weiterhin den Ø-Preis nach Ausschüttungen.
 // Krypto zusätzlich: FIFO-Lose, um die Haltedauer (> 1 Jahr = steuerfrei) zu zeigen.
 
 import { type Asset, type AssetKind, type Booking, type Settings, priceFactor } from './types';
@@ -52,6 +54,18 @@ export interface Position {
   uncoveredProceeds: number;
   firstDate?: string;
   lastDate?: string;
+  /** Erträge aus verschmolzenen Vorgänger-Fonds (senken nur den Ø-Preis, zählen nicht doppelt) */
+  carriedIncome: number;
+  /** Verschmelzung in einen anderen Fonds: übergebener Einstand und Erträge */
+  mergedOut?: MergeCarry & { toAssetId: string };
+  /** Hervorgegangen aus diesen Fonds (Verschmelzung) */
+  mergedFrom: string[];
+}
+
+/** Was bei einer Fondsverschmelzung vom alten auf den neuen Fonds übergeht */
+export interface MergeCarry {
+  cost: number;
+  income: number;
 }
 
 const EPS = 1e-9;
@@ -91,7 +105,14 @@ export interface CalcOptions {
   feesInCost: boolean;
 }
 
-export function computePosition(asset: Asset, bookings: Booking[], today: string, opts: CalcOptions = { feesInCost: false }): Position {
+export function computePosition(
+  asset: Asset,
+  bookings: Booking[],
+  today: string,
+  opts: CalcOptions = { feesInCost: false },
+  /** Übergaben aus Verschmelzungen, je alter Fonds (assetId) */
+  carry: Map<string, MergeCarry> = new Map(),
+): Position {
   const f = priceFactor(asset);
   let qty = 0;
   let cost = 0;
@@ -103,6 +124,9 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
   let lastTradePrice: number | undefined;
   let missingBuys = false;
   let uncoveredProceeds = 0;
+  let carriedIncome = 0;
+  let mergedOut: Position['mergedOut'];
+  const mergedFrom: string[] = [];
   const perKonto: Record<string, number> = {};
   const lots: Lot[] = [];
   const move = (konto: string, q: number) => {
@@ -115,13 +139,18 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
     switch (b.type) {
       case 'kauf':
       case 'einlieferung': {
-        const c = (b.amount || 0) + (opts.feesInCost ? b.fee || 0 : 0);
+        const from = b.type === 'einlieferung' && b.fromAssetId ? carry.get(b.fromAssetId) : undefined;
+        if (b.type === 'einlieferung' && b.fromAssetId) mergedFrom.push(b.fromAssetId);
+        if (from) carriedIncome += from.income;
+        const c = from ? from.cost : (b.amount || 0) + (opts.feesInCost ? b.fee || 0 : 0);
         if (!opts.feesInCost) extraCosts += b.fee || 0;
         qty += b.quantity;
         cost += c;
         move(b.konto, b.quantity);
         lots.push({ date: b.date, quantity: b.quantity, costPerUnit: b.quantity ? c / b.quantity : 0 });
         if (b.type === 'kauf' && b.price) lastTradePrice = b.price;
+        // Verschmelzung: bis ein Kurs vorliegt, gilt der übernommene Einstand je Stück
+        if (from && b.quantity > 0) lastTradePrice = from.cost / b.quantity / f;
         break;
       }
       case 'verkauf':
@@ -135,6 +164,10 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
         qty -= q;
         move(b.konto, -q);
         consumeLots(lots, q);
+        if (b.type === 'auslieferung' && b.toAssetId) {
+          // Verschmelzung: Einstand und bisherige Erträge gehen an den neuen Fonds, kein Gewinn/Verlust
+          mergedOut = { toAssetId: b.toAssetId, cost: costOut, income: incomeNet + carriedIncome };
+        }
         if (b.type === 'verkauf') {
           // Fehlen Käufe (mehr verkauft als vorhanden), zählt nur der gedeckte Anteil als Gewinn –
           // sonst würde der Erlös der fehlenden Stücke komplett als Gewinn erscheinen.
@@ -183,7 +216,7 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
   const price = asset.currentPrice ?? lastTradePrice;
   const priceIsFallback = asset.currentPrice == null && lastTradePrice != null;
   const avgPrice = qty > EPS ? cost / qty / f : 0;
-  const effAvgPrice = qty > EPS ? (cost - incomeNet) / qty / f : 0;
+  const effAvgPrice = qty > EPS ? (cost - incomeNet - carriedIncome) / qty / f : 0;
   const marketValue = qty <= EPS ? 0 : price != null ? qty * price * f : undefined;
   const unrealized = marketValue != null ? marketValue - cost : undefined;
   const unrealizedPct = unrealized != null && cost > EPS ? unrealized / cost : undefined;
@@ -224,7 +257,39 @@ export function computePosition(asset: Asset, bookings: Booking[], today: string
     uncoveredProceeds,
     firstDate: sorted[0]?.date,
     lastDate: sorted[sorted.length - 1]?.date,
+    carriedIncome,
+    mergedOut,
+    mergedFrom,
   };
+}
+
+/**
+ * Alle Positionen berechnen; Fonds aus einer Verschmelzung erst, nachdem ihr Vorgänger berechnet ist
+ * (dessen Einstand geht über). Liefert die Positionen und die Übergaben je altem Fonds.
+ */
+export function computePositions(
+  assets: Asset[],
+  byAsset: Map<string, Booking[]>,
+  today: string,
+  opts: CalcOptions,
+): { positions: Position[]; carry: Map<string, MergeCarry> } {
+  const carry = new Map<string, MergeCarry>();
+  const done = new Map<string, Position>();
+  let pending = [...assets];
+  while (pending.length) {
+    const ready = pending.filter((a) =>
+      (byAsset.get(a.id) ?? []).every((b) => !b.fromAssetId || done.has(b.fromAssetId) || !assets.some((x) => x.id === b.fromAssetId)),
+    );
+    // Zirkelbezug (sollte nicht vorkommen): Rest ohne Übergabe rechnen
+    const batch = ready.length ? ready : pending;
+    for (const a of batch) {
+      const p = computePosition(a, byAsset.get(a.id) ?? [], today, opts, carry);
+      done.set(a.id, p);
+      if (p.mergedOut) carry.set(a.id, { cost: p.mergedOut.cost, income: p.mergedOut.income });
+    }
+    pending = pending.filter((a) => !batch.includes(a));
+  }
+  return { positions: assets.map((a) => done.get(a.id)!), carry };
 }
 
 export interface YearRow {
@@ -252,6 +317,7 @@ export function computeYears(
   settings: Settings,
   kind: AssetKind,
   opts: CalcOptions = { feesInCost: false },
+  carry: Map<string, MergeCarry> = new Map(),
 ): YearRow[] {
   const assetKind = new Map(assets.map((a) => [a.id, a.kind]));
   const rel = bookings.filter((b) => (b.assetId ? assetKind.get(b.assetId) === kind : kind === 'wertpapier'));
@@ -281,7 +347,8 @@ export function computeYears(
     for (const b of sortBookings(list)) {
       if (b.type === 'kauf' || b.type === 'einlieferung') {
         qty += b.quantity;
-        cost += (b.amount || 0) + (opts.feesInCost ? b.fee || 0 : 0);
+        const from = b.type === 'einlieferung' && b.fromAssetId ? carry.get(b.fromAssetId) : undefined;
+        cost += from ? from.cost : (b.amount || 0) + (opts.feesInCost ? b.fee || 0 : 0);
       } else if (b.type === 'verkauf' || b.type === 'auslieferung') {
         const avg = qty > EPS ? cost / qty : 0;
         const q = Math.min(b.quantity, qty);
@@ -335,15 +402,18 @@ export function computeSummary(
   const opts: CalcOptions = { feesInCost: settings.gebuehrenImEinstand };
   const byAsset = new Map<string, Booking[]>();
   for (const b of bookings) if (b.assetId) byAsset.set(b.assetId, [...(byAsset.get(b.assetId) ?? []), b]);
-  const all = assets
-    .filter((a) => a.kind === kind)
-    .map((a) => computePosition(a, byAsset.get(a.id) ?? [], today, opts));
+  const { positions: all, carry } = computePositions(
+    assets.filter((a) => a.kind === kind),
+    byAsset,
+    today,
+    opts,
+  );
   const isClosed = (p: Position) => !!p.asset.closedAt || (p.quantity <= EPS && p.bookingCount > 0);
   const positions = all
     .filter((p) => !isClosed(p) && p.quantity > EPS)
     .sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0));
   const closed = all.filter(isClosed).sort((a, b) => (b.lastDate ?? '').localeCompare(a.lastDate ?? ''));
-  const years = computeYears(assets, bookings, settings, kind, opts);
+  const years = computeYears(assets, bookings, settings, kind, opts, carry);
 
   // Buchungen ohne Wertpapier (z. B. Depotgebühr, Steuer vom Kontoauszug)
   let looseCosts = 0;

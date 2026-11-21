@@ -3,18 +3,21 @@ import type { Position } from '../lib/calc';
 import { sortBookings } from '../lib/calc';
 import { db } from '../lib/db';
 import { fmtEur, fmtPrice, fmtQty, isoToDe, parseDe, round, todayIso, uid } from '../lib/num';
-import { ASSET_TYP_LABEL, type AssetTyp, BOOKING_TYPE_LABEL, type Booking } from '../lib/types';
+import { buildMerge } from '../lib/merge';
+import { type Asset, ASSET_TYP_LABEL, type AssetTyp, type Booking, bookingLabel } from '../lib/types';
 import { Field, Money, Pct, Sheet } from './ui';
 
 interface Props {
   position: Position;
   bookings: Booking[];
+  /** alle Wertpapiere – für die Auswahl bei einer Fondsverschmelzung */
+  assets?: Asset[];
   onClose: () => void;
   onEditBooking: (b: Booking) => void;
   onAddBooking: (assetId: string) => void;
 }
 
-export function PositionDetail({ position: p, bookings, onClose, onEditBooking, onAddBooking }: Props) {
+export function PositionDetail({ position: p, bookings, assets = [], onClose, onEditBooking, onAddBooking }: Props) {
   const a = p.asset;
   const isBond = a.typ === 'anleihe';
   const unit = isBond ? ' %' : ' €';
@@ -25,6 +28,38 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
   const [closeDate, setCloseDate] = useState(todayIso());
   const [closePrice, setClosePrice] = useState('');
   const list = sortBookings(bookings).reverse();
+  const [merging, setMerging] = useState(false);
+  const [mTarget, setMTarget] = useState('neu');
+  const [mName, setMName] = useState('');
+  const [mIsin, setMIsin] = useState('');
+  const [mWkn, setMWkn] = useState('');
+  const [mDate, setMDate] = useState(todayIso());
+  const [mQty, setMQty] = useState('');
+  const [mError, setMError] = useState('');
+  const nameOf = (id: string) => assets.find((x) => x.id === id)?.name ?? 'anderer Fonds';
+  const mergeTargets = assets.filter((x) => x.kind === 'wertpapier' && x.id !== a.id && !x.closedAt);
+
+  const mergeFund = async () => {
+    setMError('');
+    try {
+      const r = buildMerge({
+        from: p,
+        toAsset: mTarget === 'neu' ? undefined : assets.find((x) => x.id === mTarget),
+        newAsset: { name: mName, isin: mIsin, wkn: mWkn },
+        date: mDate,
+        quantity: parseDe(mQty),
+      });
+      await db.transaction('rw', db.assets, db.bookings, async () => {
+        if (r.createdAsset) await db.assets.add(r.createdAsset);
+        await db.bookings.bulkAdd(r.bookings);
+        await db.assets.update(a.id, { closedAt: r.closeFromAt });
+      });
+      setMerging(false);
+      onClose();
+    } catch (e) {
+      setMError((e as Error).message);
+    }
+  };
 
   const savePrice = async () => {
     const v = parseDe(price);
@@ -105,6 +140,18 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
           dann stimmt der realisierte Gewinn.
         </p>
       )}
+      {p.mergedOut && (
+        <p className="note">
+          Verschmolzen in <strong>{nameOf(p.mergedOut.toAssetId)}</strong>. Einstand und Erträge sind dort übernommen –
+          ohne Gewinn oder Verlust.
+        </p>
+      )}
+      {p.mergedFrom.length > 0 && (
+        <p className="note">
+          Hervorgegangen aus {p.mergedFrom.map(nameOf).join(', ')} (Fondsverschmelzung). Einstand
+          {p.carriedIncome > 0 ? ` und ${fmtEur(p.carriedIncome)} Erträge` : ''} wurden übernommen.
+        </p>
+      )}
       <ul className="kv-panel">
         <li>
           <span>Bestand</span>
@@ -120,7 +167,7 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
           <span>Ø-Kaufkurs</span>
           <span className="num">{fmtPrice(p.avgPrice, unit)}</span>
         </li>
-        {p.incomeNet > 0 && (
+        {p.incomeNet + p.carriedIncome > 0 && (
           <li>
             <span>Ø nach Ausschüttungen</span>
             <span className="num">{fmtPrice(p.effAvgPrice, unit)}</span>
@@ -198,7 +245,7 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
             <li key={b.id} onClick={() => onEditBooking(b)}>
               <div>
                 <div className="bt">
-                  {BOOKING_TYPE_LABEL[b.type]}
+                  {bookingLabel(b)}
                   {b.type === 'transfer' && ` ${b.konto} → ${b.zielKonto}`}
                   {b.hint && <span className="dot warn" title="bitte prüfen" />}
                 </div>
@@ -244,14 +291,72 @@ export function PositionDetail({ position: p, bookings, onClose, onEditBooking, 
               Wieder öffnen
             </button>
           ) : (
-            <button className="btn" onClick={() => setClosing(true)}>
-              Position schließen …
-            </button>
+            <>
+              <button className="btn" onClick={() => setClosing(true)}>
+                Position schließen …
+              </button>
+              {a.kind === 'wertpapier' && p.quantity > 1e-9 && (
+                <button className="btn" onClick={() => setMerging(true)}>
+                  Fondsverschmelzung …
+                </button>
+              )}
+            </>
           )}
           <button className="btn danger ghost" onClick={removeAsset}>
             Löschen
           </button>
         </div>
+        {merging && (
+          <div className="subcard">
+            <p className="small">
+              Der Fonds geht in einen neuen Fonds über (neue WKN/ISIN). Einstand und bisherige Erträge werden übernommen,
+              es entsteht kein Gewinn oder Verlust. Dieser Fonds wandert in die Historie.
+            </p>
+            <Field label="Neuer Fonds">
+              <select value={mTarget} onChange={(e) => setMTarget(e.target.value)}>
+                <option value="neu">Neu anlegen …</option>
+                {mergeTargets.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
+                    {x.wkn ? ` (${x.wkn})` : ''}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {mTarget === 'neu' && (
+              <>
+                <Field label="Name">
+                  <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Name des neuen Fonds" />
+                </Field>
+                <div className="grid2">
+                  <Field label="ISIN">
+                    <input value={mIsin} onChange={(e) => setMIsin(e.target.value)} autoCapitalize="characters" />
+                  </Field>
+                  <Field label="WKN">
+                    <input value={mWkn} onChange={(e) => setMWkn(e.target.value)} autoCapitalize="characters" />
+                  </Field>
+                </div>
+              </>
+            )}
+            <div className="grid2">
+              <Field label="Datum">
+                <input type="date" value={mDate} onChange={(e) => setMDate(e.target.value)} />
+              </Field>
+              <Field label="Neue Stückzahl" hint={`bisher ${fmtQty(p.quantity)}`}>
+                <input inputMode="decimal" value={mQty} onChange={(e) => setMQty(e.target.value)} />
+              </Field>
+            </div>
+            {mError && <p className="note warn">{mError}</p>}
+            <div className="row">
+              <button className="btn ghost" onClick={() => setMerging(false)}>
+                Abbrechen
+              </button>
+              <button className="btn primary" onClick={mergeFund}>
+                Übernehmen
+              </button>
+            </div>
+          </div>
+        )}
         {closing && (
           <div className="subcard">
             <p className="small">
